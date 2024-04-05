@@ -31,3 +31,22 @@ echo #define LIGHT_OVERLAY
 echo #define CHUNK_BORDERS
 ) > "%textfile%"
 call packing.bat NightVision-LightOverlay
+
+echo. > "%textfile%"
+(
+echo #define LIGHT_OVERLAY
+) > "%textfile%"
+call packing.bat NoChunkBorders-LightOverlay
+
+echo. > "%textfile%"
+(
+echo #define NIGHT_VISION
+) > "%textfile%"
+call packing.bat NoChunkBorders-NightVision
+
+echo. > "%textfile%"
+(
+echo #define NIGHT_VISION
+echo #define LIGHT_OVERLAY
+) > "%textfile%"
+call packing.bat NoChunkBorders-NightVision-LightOverlay

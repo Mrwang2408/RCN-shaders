@@ -3,9 +3,9 @@ $input v_color0, v_texcoord0, v_lightmapUV, v_position, v_worldpos
 #include <bgfx_shader.sh>
 #include <defines.sh>
 
-SAMPLER2D(s_MatTexture, 0);
-SAMPLER2D(s_SeasonsTexture, 1);
-SAMPLER2D(s_LightMapTexture, 2);
+SAMPLER2D_AUTOREG(s_MatTexture);
+SAMPLER2D_AUTOREG(s_SeasonsTexture);
+SAMPLER2D_AUTOREG(s_LightMapTexture);
 
 void main() {
     vec4 diffuse;
@@ -23,7 +23,9 @@ void main() {
 #endif
 
 #if defined(SEASONS) && (defined(OPAQUE) || defined(ALPHA_TEST))
-    diffuse.rgb *= mix(vec3(1.0, 1.0, 1.0), texture2D(s_SeasonsTexture, v_color0.xy).rgb * 2.0, v_color0.b);
+    diffuse.rgb *=
+        mix(vec3(1.0, 1.0, 1.0),
+            texture2D(s_SeasonsTexture, v_color0.xy).rgb * 2.0, v_color0.b);
     diffuse.rgb *= v_color0.aaa;
 #else
     diffuse *= v_color0;

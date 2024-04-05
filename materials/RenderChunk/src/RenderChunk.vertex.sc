@@ -1,6 +1,6 @@
 $input a_color0, a_position, a_texcoord0, a_texcoord1
 #ifdef INSTANCING
-    $input i_data0, i_data1, i_data2, i_data3
+    $input i_data0, i_data1, i_data2
 #endif
 $output v_color0, v_texcoord0, v_lightmapUV, v_position, v_worldpos
 
@@ -18,7 +18,7 @@ float Pow2(float x){
 void main() {
     mat4 model;
 #ifdef INSTANCING
-    model = mtxFromCols(i_data0, i_data1, i_data2, i_data3);
+    model = mtxFromCols(i_data0, i_data1, i_data2, vec4(0, 0, 0, 1));
 #else
     model = u_model[0];
 #endif

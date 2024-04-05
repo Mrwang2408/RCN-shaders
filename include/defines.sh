@@ -1,3 +1,2 @@
-#define CHUNK_BORDERS
-#define LIGHT_OVERLAY
 #define NIGHT_VISION
+#define LIGHT_OVERLAY

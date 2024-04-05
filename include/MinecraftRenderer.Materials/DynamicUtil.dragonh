@@ -32,6 +32,7 @@ vec4 applyMultiColorChange(vec4 diffuse, vec3 changeColor, vec3 multiplicativeTi
 
 vec4 applyLighting(vec4 diffuse, const vec4 light) {
     diffuse.rgb *= light.rgb;
+
     return diffuse;
 }
 
