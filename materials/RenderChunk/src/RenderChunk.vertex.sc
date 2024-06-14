@@ -1,24 +1,38 @@
 $input a_color0, a_position, a_texcoord0, a_texcoord1
+
 #ifdef INSTANCING
-    $input i_data0, i_data1, i_data2
+    $input i_data0, i_data1, i_data2, i_data3
 #endif
+
 $output v_color0, v_texcoord0, v_lightmapUV, v_position, v_worldpos
+
 
 #include <bgfx_shader.sh>
 
-uniform vec4 RenderChunkFogAlpha;
-uniform vec4 FogAndDistanceControl;
+#ifndef NO_FOG
+
+//	$output v_fog
+	uniform vec4 RenderChunkFogAlpha;
+	uniform vec4 FogAndDistanceControl;
+	uniform vec4 FogColor;
+
+#endif
+
 uniform vec4 ViewPositionAndTime;
-uniform vec4 FogColor;
+
+
+//SAMPLER2D(s_MatTexture, 0);
+
 
 float Pow2(float x){
     return x * x;
 }
 
+
 void main() {
     mat4 model;
 #ifdef INSTANCING
-    model = mtxFromCols(i_data0, i_data1, i_data2, vec4(0, 0, 0, 1));
+    model = mtxFromCols(i_data0, i_data1, i_data2, i_data3);
 #else
     model = u_model[0];
 #endif
@@ -49,13 +63,6 @@ void main() {
     color = a_color0;
 #endif
 
-    // vec3 modelCamPos = (ViewPositionAndTime.xyz - worldPos);
-    // float camDis = length(modelCamPos);
-    // vec4 fogColor;
-    // fogColor.rgb = FogColor.rgb;
-    // fogColor.a = clamp(((((camDis / FogAndDistanceControl.z) + RenderChunkFogAlpha.x) -
-        // FogAndDistanceControl.x) / (FogAndDistanceControl.y - FogAndDistanceControl.x)), 0.0, 1.0);
-
 // #ifdef TRANSPARENT
     // if(a_color0.a < 0.95) {
         // color.a = mix(a_color0.a, 1.0, clamp((camDis / FogAndDistanceControl.w), 0.0, 1.0));
@@ -65,7 +72,35 @@ void main() {
     v_texcoord0 = a_texcoord0;
     v_lightmapUV = a_texcoord1;
     v_color0 = color;
-    //v_fog = fogColor;
-    v_worldpos = worldPos;
+	v_worldpos = worldPos;
+	
+	
+/*	
+	if(color.g > 0.5) {
+		//v_color0.rgb = vec3(1.0,1.0,1.0);
+	};
+	
+	vec4 diffuse;
+	diffuse = texture2D(s_MatTexture, v_texcoord0);
+	
+	if (color.r > 0.5) {
+		//worldPos.y += 0.5;
+	};
+*/
+
+#ifndef NO_FOG
+
+//	vec3 modelCamPos = (ViewPositionAndTime.xyz - worldPos);
+//	float camDis = length(modelCamPos);
+//	vec4 fogColor;
+//	fogColor.rgb = FogColor.rgb;
+//	fogColor.a = clamp(((((camDis / FogAndDistanceControl.z) + RenderChunkFogAlpha.x) -
+//	FogAndDistanceControl.x) / (FogAndDistanceControl.y - FogAndDistanceControl.x)), 0.0, 1.0);
+//	v_fog = fogColor;
+
+#endif
+
+
+
     gl_Position = mul(u_viewProj, vec4(worldPos, 1.0));
 }
