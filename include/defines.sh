@@ -18,3 +18,6 @@
 	#define ORE_TEST
 	
 	
+//	#define DEBUG_UV
+	
+	

@@ -66,16 +66,7 @@ void main() {
 #if defined(ORE_TEST) && (defined(OPAQUE) || defined(ALPHA_TEST) || defined(TRANSPARENT)) && !(defined(SEASONS) || defined(INSTANCING) || defined(RENDER_AS_BILLBOARDS))
 
   vec4 oreTest = texture2DLod(s_MatTexture, v_texcoord0, 0.0);
-  //float grade = 32.0 * 1.0;
-  //vec2 matTest = floor(v_texcoord0 * vec2(grade, grade*2.0)) / vec2(grade, grade*2.0);
-  //vec2 matTest = floor(v_texcoord0 * vec2(grade*2.0, grade)) / vec2(grade*2.0, grade);
-  //vec4 oreTest2 = texture2D(s_MatTexture,  matTest);
-  //oreTest2.rgb *= v_color0.rgb;
-  //oreTest2.a = 1.0;
   
-  //vec4 oreTest2 = texture2D(s_MatTexture, v_texcoord0 - vec2(0.03125, 0.015625), 0.0);
-	
-	
 if (!(oreTest.a == 1.00)){
 	if (oreTest.a > 0.03 && oreTest.a < 0.06) {
 		diffuse.rgb = ((vec3(1.0, 1.0, 1.0)+0.95) * diffuse.rgb);
@@ -84,6 +75,7 @@ if (!(oreTest.a == 1.00)){
 	};
 	if (oreTest.a > 0.9875 && oreTest.a < 0.9925) {
 		diffuse.rgb = ((vec3(1.0, 1.0, 1.0)+0.45) * diffuse.rgb);
+		//diffuse.rgb = (vec3(0.0, 1.0, 0.0);
 		needLightMap = false;
 	};
 	if (oreTest.a > 0.948 && oreTest.a < 0.966) {
@@ -99,11 +91,9 @@ if (!(oreTest.a == 1.00)){
 	#endif
 	
 };
-	//diffuse.rgb = oreTest2.rgb;
-	//diffuse.rgb = v_color0.rgb;
+
 #endif
-	
-	//diffuse.rgb = v_color0.rgb;
+
 
 
 
@@ -584,30 +574,34 @@ if (!(oreTest.a == 1.00)){
     #endif
 		
 
+		
+	//查看 texture atlas 纹理图集
+	
 	vec2 debuguv ;
-	debuguv.x = v_worldpos.x / 4.0 + 0.5;
-	debuguv.y = v_worldpos.z / 8.0 + 0.3;
-//	debuguv.x = v_worldpos.x / 8.0 + 0.5;
-//	debuguv.y = v_worldpos.z / 4.0 + 0.3;
+//	debuguv.x = v_worldpos.x / 4.0 + 0.5;
+//	debuguv.y = v_worldpos.z / 8.0 + 0.3;
+	debuguv.x = v_worldpos.x / 8.0 + 0.5;
+	debuguv.y = v_worldpos.z / 4.0 + 0.4;
 
-/*
 	if (debuguv.x > 0.0 && debuguv.y > 0.0 && debuguv.x < 1.0 && debuguv.y < 1.0 &&
-	v_position.y > 15.99 
-	){
-	diffuse = texture2D(s_MatTexture, debuguv, 0.0);
+	(v_position.y > 15.99 || isWater)){
+		diffuse = texture2D(s_MatTexture, debuguv);
+	};	
+	
+
+	
+
+	if (debuguv.y>0.406 && debuguv.y<0.532){
+		//diffuse.rgb=vec3(3.0,3.0,3.0);
 	};
-*/
-	if (debuguv.x > 0.0 && debuguv.y > 0.0 && debuguv.x < 1.0 && debuguv.y < 1.0 &&
-	isWater
-	){
-	diffuse = texture2D(s_MatTexture, debuguv, 0.0);
+	if (v_texcoord0.y>0.406 && v_texcoord0.y<0.532){
+		//diffuse.rgb=vec3(3.0,3.0,3.0);
 	};
 	
+	//diffuse.rgb = floor(v_position.xyz)/vec3(16.0,16.0,16.0);
 	
 	#if (defined(OPAQUE) || defined(ALPHA_TEST) || defined(TRANSPARENT)) 
-	
 	cp = fract(v_position.xyz);
-	
 	if (
 	((cp.x < 0.03125 || cp.x > 0.96875) && (cp.y < 0.03125 || cp.y > 0.96875)) || 
 	((cp.x < 0.03125 || cp.x > 0.96875) && (cp.z < 0.03125 || cp.z > 0.96875)) ||
@@ -616,16 +610,68 @@ if (!(oreTest.a == 1.00)){
 		//diffuse.rgb = ViewPositionAndTime.www;
 		
 	};
-	
 	#endif
 	
 	
-#endif			
+	//基于纹理图集的马赛克效果低清材质包
 	
+	vec2 matTest;
+	vec4 matTest2;
 	
-	//diffuse.rgb = floor(v_position.xyz)/vec3(16.0,16.0,16.0);
+	float grade = 1.0 * 1.0;
+	
+//	matTest = floor(v_texcoord0 * vec2(grade, grade*2.0)) / vec2(grade, grade*2.0);
+//	matTest = floor(v_texcoord0 * vec2(grade*2.0, grade)) / vec2(grade*2.0, grade);
+//	matTest2 = texture2D(s_MatTexture,  matTest);
+	
+//	matTest2 = texture2D(s_MatTexture, v_texcoord0 - vec2(0.03125*1.0, 0.03125*0.5));
+//	matTest2 = texture2D(s_MatTexture, v_texcoord0 - vec2(0.03125*0.5, 0.03125*1.0));
+
+//	matTest2.a = 1.0;
+//	matTest2.rgb *= v_color0.rgb;
+//	diffuse.rgb = matTest2.rgb;
+
+	
+	#ifdef ALPHA_TEST
+	if (v_color0.g*1.5>v_color0.r+v_color0.b||v_color0.r*1.5>v_color0.g+v_color0.b) {
+		//diffuse.rgb = vec3(0.0,0.0,1.0);
+	};
+	#endif
+
+//	diffuse.rgb = v_color0.rgb;
+//	diffuse.rgb = v_color0.aaa;
+	
+
+#endif	
+
+	vec2 uv0 = v_texcoord0;
+	if (fract(v_position.y) < 0.01) {
+		
+	//	diffuse.rgb = texture2D(s_MatTexture, v_position.xz/16.0).rgb;	
+	//	diffuse.rgb = texture2D(s_MatTexture, v_position.xz/vec2(512.0,256.0)).rgb;
+	
+	//	float uvt1 = fract(((uv0.y-=((uv0.y>0.0234375)?0.0234375:0.0)) * 25.0));
+	//	float uvt1 = fract(uv0.y * 25.0);
+	//	diffuse.rgb = vec3(uvt1,uvt1,uvt1);
+
+	//	diffuse.rgb = texture2D(s_MatTexture, fract(v_position.xz)).rgb;	
+	//	diffuse.rgb = texture2D(s_LightMapTexture, v_position.xz/16.0).rgb;		
+	//	diffuse.rgb = texture2D(s_SeasonsTexture, v_position.xz/16.0).rgb;	
+		
+	}
+	
+	//diffuse = vec4(1.0,1.0,1.0,1.0);
 	
     gl_FragColor = diffuse;
-}
+} 
+
+
+
+
+
+
+
+
+
 
 

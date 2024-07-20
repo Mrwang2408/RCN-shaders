@@ -21,7 +21,7 @@ $output v_color0, v_texcoord0, v_lightmapUV, v_position, v_worldpos
 uniform vec4 ViewPositionAndTime;
 
 
-//SAMPLER2D(s_MatTexture, 0);
+	SAMPLER2D(s_MatTexture, 0);
 
 
 float Pow2(float x){
@@ -69,24 +69,39 @@ void main() {
     // };
 // #endif
 
+/*
+	float dt = 0.9;
+
+	
+	vec4 diffuse;
+	diffuse = texture2D(s_MatTexture, a_texcoord0);
+	
+	
+	if(diffuse.g > 0.1) {
+		color.rgb = vec3(10.0,10.0,0.1);
+	};
+	
+	color.rgb = vec3(10.0,10.0,0.1);
+	if (color.r > 0.5) {
+		//worldPos.y += 0.5;
+	};
+
+	// dt=color.g>0.5?0.8:0.2;
+	
+	
+
+
+	#ifdef SEASONS
+		dt = 10.0;
+	#endif	
+
+*/
+
     v_texcoord0 = a_texcoord0;
     v_lightmapUV = a_texcoord1;
     v_color0 = color;
 	v_worldpos = worldPos;
 	
-	
-/*	
-	if(color.g > 0.5) {
-		//v_color0.rgb = vec3(1.0,1.0,1.0);
-	};
-	
-	vec4 diffuse;
-	diffuse = texture2D(s_MatTexture, v_texcoord0);
-	
-	if (color.r > 0.5) {
-		//worldPos.y += 0.5;
-	};
-*/
 
 #ifndef NO_FOG
 
@@ -99,7 +114,6 @@ void main() {
 //	v_fog = fogColor;
 
 #endif
-
 
 
     gl_Position = mul(u_viewProj, vec4(worldPos, 1.0));
