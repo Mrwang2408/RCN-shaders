@@ -12,6 +12,7 @@ $input v_color0, v_texcoord0, v_lightmapUV, v_position, v_worldpos
 
 #include <bgfx_shader.sh>
 #include <defines.sh>
+#include <RCN_overlays.h>
 
 SAMPLER2D(s_MatTexture, 0);
 SAMPLER2D(s_SeasonsTexture, 1);
@@ -45,19 +46,20 @@ void main() {
 	
 	bool needLightMap = true;
 
-	vec3 chunkPos = v_position;
-	vec3 cp = fract(chunkPos);
-	//vec3 cp = 1.0 - fract(chunkPos);  //是否倒转字体
+	vec3 chunkPos = v_position;		//chunkPos：每区块坐标（16x16x16）
+	vec3 bPos = fract(chunkPos);	//bPos: 每方块坐标（1x1x1）
+	//vec3 bPos = 1.0 - fract(chunkPos);  //是否倒转字体
 
-		cp.x = cp.x * 3.0 - 1.1;
-		cp.z = cp.z * 3.0 - 1.1;
+		bPos.x = bPos.x * 3.0 - 1.1;
+		bPos.z = bPos.z * 3.0 - 1.1;
 
 	vec3 normal = normalize(cross(dFdx(chunkPos), dFdy(chunkPos)));
 
 #endif
 
 #ifndef TRANSPARENT
-    diffuse.a =  v_color0.a;
+	diffuse.a =  v_color0.a;
+	//diffuse.a =  1.0;
 #endif
 
 
@@ -67,6 +69,8 @@ void main() {
 
   vec4 oreTest = texture2DLod(s_MatTexture, v_texcoord0, 0.0);
   
+  
+  /*
 if (!(oreTest.a == 1.00)){
 	if (oreTest.a > 0.03 && oreTest.a < 0.06) {
 		diffuse.rgb = ((vec3(1.0, 1.0, 1.0)+0.95) * diffuse.rgb);
@@ -91,8 +95,30 @@ if (!(oreTest.a == 1.00)){
 	#endif
 	
 };
+*/
+
+
+	vec3 glow = nlGlow(s_MatTexture, v_texcoord0, diffuse, 1.0);
+
+
+
+
 
 #endif
+
+
+
+			//     aaaaaaa
+			//    f       b
+			//    f       b
+			//    f       b
+			//     ggggggg
+			//    e       c
+			//    e       c
+			//    e       c
+			//     ddddddd
+			//
+
 
 
 
@@ -112,170 +138,170 @@ if (!(oreTest.a == 1.00)){
 		#if defined(REDSTONE_OVERLAY) && !(defined(SEASONS))
 		needLightMap = false; 
 		if (
-			(cp.x <= 0.7 && cp.x >= 0.1 && cp.z <= 0.08 && cp.z >= 0.05) ||
-			(cp.x <= 0.7 && cp.x >= 0.1 && cp.z <= 0.2 && cp.z >= 0.17)) {
+			(bPos.x <= 0.7 && bPos.x >= 0.1 && bPos.z <= 0.08 && bPos.z >= 0.05) ||
+			(bPos.x <= 0.7 && bPos.x >= 0.1 && bPos.z <= 0.2 && bPos.z >= 0.17)) {
 			isRsOverlay = true;  //预绘制两条横线
 		} else if (v_color0.r > 0.2930392 && v_color0.r < 0.3030392 && (v_color0.g + v_color0.b) < 0.005) {
 			if (
-			(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.25) || 
-			(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.75 && cp.z >= 0.25) || 
-			(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.75 && cp.z >= 0.65) || 
-			(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.35 && cp.z >= 0.25)) {
+			(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+			(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.35 && bPos.z >= 0.25)) {
 			isRsOverlay = true;  //信号强度0
 			};
 		} else if (v_color0.r > 0.999 && v_color0.g > 0.1910784 && v_color0.g < 0.2010784 && v_color0.b < 0.005) {
 			if (
-			(cp.x <= 0.7 && cp.x >= 0.1 && cp.z <= 0.15 && cp.z >= 0.1) || 
-			(cp.x <= 0.7 && cp.x >= 0.4 && cp.z <= 0.35 && cp.z >= 0.25) || 
-			(cp.x <= 0.6 && cp.x >= 0.5 && cp.z <= 0.75 && cp.z >= 0.35) || 
-			(cp.x <= 0.7 && cp.x >= 0.6 && cp.z <= 0.75 && cp.z >= 0.65) || 
-			(cp.x <= 0.3 && cp.x >= 0.2 && cp.z <= 0.55 && cp.z >= 0.45) || 
-			(cp.x <= 0.2 && cp.x >= 0.1 && cp.z <= 0.55 && cp.z >= 0.25) || 
-			(cp.x <= 0.4 && cp.x >= 0.3 && cp.z <= 0.75 && cp.z >= 0.45) || 
-			(cp.x <= 0.3 && cp.x >= 0.1 && cp.z <= 0.75 && cp.z >= 0.65) || 
-			(cp.x <= 0.4 && cp.x >= 0.2 && cp.z <= 0.35 && cp.z >= 0.25)) {
+			(bPos.x <= 0.7 && bPos.x >= 0.1 && bPos.z <= 0.15 && bPos.z >= 0.1) || 
+			(bPos.x <= 0.7 && bPos.x >= 0.4 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.6 && bPos.x >= 0.5 && bPos.z <= 0.75 && bPos.z >= 0.35) || 
+			(bPos.x <= 0.7 && bPos.x >= 0.6 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+			(bPos.x <= 0.3 && bPos.x >= 0.2 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+			(bPos.x <= 0.2 && bPos.x >= 0.1 && bPos.z <= 0.55 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.4 && bPos.x >= 0.3 && bPos.z <= 0.75 && bPos.z >= 0.45) || 
+			(bPos.x <= 0.3 && bPos.x >= 0.1 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+			(bPos.x <= 0.4 && bPos.x >= 0.2 && bPos.z <= 0.35 && bPos.z >= 0.25)) {
 			isRsOverlay = true;  //信号强度15
 			};
 		} else if (v_color0.r > 0.4342157 && v_color0.r < 0.4442157 && (v_color0.g + v_color0.b) < 0.005) {
 			if (
-			(mod(floor(1.0 / exp2(floor(6.666667 * (cp.x - 0.1)))), 2.0) >= 0.5 && cp.z <= 0.15 && cp.z >= 0.1) || 
-			(cp.x <= 0.55 && cp.x >= 0.25 && cp.z <= 0.35 && cp.z >= 0.25) || 
-			(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.75 && cp.z >= 0.35) || 
-			(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.75 && cp.z >= 0.65)) {
+			(mod(floor(1.0 / exp2(floor(6.666667 * (bPos.x - 0.1)))), 2.0) >= 0.5 && bPos.z <= 0.15 && bPos.z >= 0.1) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.25 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.75 && bPos.z >= 0.35) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.75 && bPos.z >= 0.65)) {
 			isRsOverlay = true;  //信号强度1
 			};
 		} else if (v_color0.r > 0.4734314 && v_color0.r < 0.4834314 && (v_color0.g + v_color0.b) < 0.005) {
 			if (
-			(mod(floor(2.0 / exp2(floor(6.666667 * (cp.x - 0.1)))), 2.0) >= 0.5 && cp.z <= 0.15 && cp.z >= 0.1) || 
-			(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.55 && cp.z >= 0.45) || 
-			(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.45) || 
-			(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.55 && cp.z >= 0.25) || 
-			(cp.x <= 0.45 && cp.x >= 0.25 && cp.z <= 0.35 && cp.z >= 0.25) || 
-			(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.75 && cp.z >= 0.65)) {
+			(mod(floor(2.0 / exp2(floor(6.666667 * (bPos.x - 0.1)))), 2.0) >= 0.5 && bPos.z <= 0.15 && bPos.z >= 0.1) || 
+			(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+			(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.45) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.55 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.45 && bPos.x >= 0.25 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.75 && bPos.z >= 0.65)) {
 			isRsOverlay = true;  //信号强度2
 			};
 		} else if (v_color0.r > 0.5126471 && v_color0.r < 0.5226471 && (v_color0.g + v_color0.b) < 0.005) {
 			if (
-			(mod(floor(3.0 / exp2(floor(6.666667 * (cp.x - 0.1)))), 2.0) >= 0.5 && cp.z <= 0.15 && cp.z >= 0.1) || 
-			(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.25) || 
-			(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.55 && cp.z >= 0.45) || 
-			(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.35 && cp.z >= 0.25) || 
-			(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.75 && cp.z >= 0.65)) {
+			(mod(floor(3.0 / exp2(floor(6.666667 * (bPos.x - 0.1)))), 2.0) >= 0.5 && bPos.z <= 0.15 && bPos.z >= 0.1) || 
+			(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.75 && bPos.z >= 0.65)) {
 			isRsOverlay = true;  //信号强度3
 			};
 		} else if (v_color0.r > 0.5518628 && v_color0.r < 0.5618628 && (v_color0.g + v_color0.b) < 0.005) {
 			if (
-			(mod(floor(4.0 / exp2(floor(6.666667 * (cp.x - 0.1)))), 2.0) >= 0.5 && cp.z <= 0.15 && cp.z >= 0.1) || 
-			(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.25) || 
-			(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.75 && cp.z >= 0.45) || 
-			(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.55 && cp.z >= 0.45)) {
+			(mod(floor(4.0 / exp2(floor(6.666667 * (bPos.x - 0.1)))), 2.0) >= 0.5 && bPos.z <= 0.15 && bPos.z >= 0.1) || 
+			(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.75 && bPos.z >= 0.45) || 
+			(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.55 && bPos.z >= 0.45)) {
 			isRsOverlay = true;  //信号强度4
 			};
 		} else if (v_color0.r > 0.595 && v_color0.r < 0.605 && (v_color0.g + v_color0.b) < 0.005) {
 			if (
-			(mod(floor(5.0 / exp2(floor(6.666667 * (cp.x - 0.1)))), 2.0) >= 0.5 && cp.z <= 0.15 && cp.z >= 0.1) || 
-			(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.55 && cp.z >= 0.45) || 
-			(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.55 && cp.z >= 0.25) || 
-			(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.75 && cp.z >= 0.45) || 
-			(cp.x <= 0.45 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.65) || 
-			(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.35 && cp.z >= 0.25)) {
+			(mod(floor(5.0 / exp2(floor(6.666667 * (bPos.x - 0.1)))), 2.0) >= 0.5 && bPos.z <= 0.15 && bPos.z >= 0.1) || 
+			(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+			(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.55 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.75 && bPos.z >= 0.45) || 
+			(bPos.x <= 0.45 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.35 && bPos.z >= 0.25)) {
 			isRsOverlay = true;  //信号强度5
 			};
 		} else if (v_color0.r > 0.6342157 && v_color0.r < 0.6442157 && (v_color0.g + v_color0.b) < 0.005) {
 			if (
-			(mod(floor(6.0 / exp2(floor(6.666667 * (cp.x - 0.1)))), 2.0) >= 0.5 && cp.z <= 0.15 && cp.z >= 0.1) ||
-			(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.55 && cp.z >= 0.45) || 
-			(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.55 && cp.z >= 0.25) || 
-			(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.75 && cp.z >= 0.35) || 
-			(cp.x <= 0.45 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.65) || 
-			(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.35 && cp.z >= 0.25)) {
+			(mod(floor(6.0 / exp2(floor(6.666667 * (bPos.x - 0.1)))), 2.0) >= 0.5 && bPos.z <= 0.15 && bPos.z >= 0.1) ||
+			(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+			(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.55 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.75 && bPos.z >= 0.35) || 
+			(bPos.x <= 0.45 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.35 && bPos.z >= 0.25)) {
 			isRsOverlay = true;  //信号强度6
 			};
 		} else if (v_color0.r > 0.6734314 && v_color0.r < 0.6834314 && (v_color0.g + v_color0.b) < 0.005) {
 			if (
-			(mod(floor(7.0 / exp2(floor(6.666667 * (cp.x - 0.1)))), 2.0) >= 0.5 && cp.z <= 0.15 && cp.z >= 0.1) || 
-			(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.25) || 
-			(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.75 && cp.z >= 0.65) || 
-			(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.65 && cp.z >= 0.55)) {
+			(mod(floor(7.0 / exp2(floor(6.666667 * (bPos.x - 0.1)))), 2.0) >= 0.5 && bPos.z <= 0.15 && bPos.z >= 0.1) || 
+			(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.65 && bPos.z >= 0.55)) {
 			isRsOverlay = true;  //信号强度7
 			};
 		} else if (v_color0.r > 0.7126471 && v_color0.r < 0.7226471 && (v_color0.g + v_color0.b) < 0.005) {
 			if (
-			(mod(floor(8.0 / exp2(floor(6.666667 * (cp.x - 0.1)))), 2.0) >= 0.5 && cp.z <= 0.15 && cp.z >= 0.1) || 
-			(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.55 && cp.z >= 0.45) || 
-			(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.25) || 
-			(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.75 && cp.z >= 0.25) || 
-			(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.75 && cp.z >= 0.65) || 
-			(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.35 && cp.z >= 0.25)) {
+			(mod(floor(8.0 / exp2(floor(6.666667 * (bPos.x - 0.1)))), 2.0) >= 0.5 && bPos.z <= 0.15 && bPos.z >= 0.1) || 
+			(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+			(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+			(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.35 && bPos.z >= 0.25)) {
 			isRsOverlay = true;  //信号强度8
 			};
 		} else if (v_color0.r > 0.7518628 && v_color0.r < 0.7618628 && (v_color0.g + v_color0.b) < 0.005) {
 			if (
-			(mod(floor(9.0 / exp2(floor(6.666667 * (cp.x - 0.1)))), 2.0) >= 0.5 && cp.z <= 0.15 && cp.z >= 0.1) ||
-			(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.55 && cp.z >= 0.45) || 
-			(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.35) || 
-			(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.75 && cp.z >= 0.45) || 
-			(cp.x <= 0.55 && cp.x >= 0.25 && cp.z <= 0.35 && cp.z >= 0.25) || 
-			(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.75 && cp.z >= 0.65)) {
+			(mod(floor(9.0 / exp2(floor(6.666667 * (bPos.x - 0.1)))), 2.0) >= 0.5 && bPos.z <= 0.15 && bPos.z >= 0.1) ||
+			(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+			(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.35) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.75 && bPos.z >= 0.45) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.25 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+			(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.75 && bPos.z >= 0.65)) {
 			isRsOverlay = true;  //信号强度9
 			};
 		} else if (v_color0.r > 0.795 && v_color0.r < 0.805 && (v_color0.g + v_color0.b) < 0.005) {
 			if (
-			(mod(floor(10.0 / exp2(floor(6.666667 * (cp.x - 0.1)))), 2.0) >= 0.5 && cp.z <= 0.15 && cp.z >= 0.1) || 
-			(cp.x <= 0.7 && cp.x >= 0.4 && cp.z <= 0.35 && cp.z >= 0.25) ||
-			(cp.x <= 0.6 && cp.x >= 0.5 && cp.z <= 0.75 && cp.z >= 0.35) ||
-			(cp.x <= 0.7 && cp.x >= 0.6 && cp.z <= 0.75 && cp.z >= 0.65) ||
-			(cp.x <= 0.2 && cp.x >= 0.1 && cp.z <= 0.75 && cp.z >= 0.25) ||
-			(cp.x <= 0.4 && cp.x >= 0.3 && cp.z <= 0.75 && cp.z >= 0.25) ||
-			(cp.x <= 0.3 && cp.x >= 0.2 && cp.z <= 0.75 && cp.z >= 0.65) ||
-			(cp.x <= 0.3 && cp.x >= 0.2 && cp.z <= 0.35 && cp.z >= 0.25)) {
+			(mod(floor(10.0 / exp2(floor(6.666667 * (bPos.x - 0.1)))), 2.0) >= 0.5 && bPos.z <= 0.15 && bPos.z >= 0.1) || 
+			(bPos.x <= 0.7 && bPos.x >= 0.4 && bPos.z <= 0.35 && bPos.z >= 0.25) ||
+			(bPos.x <= 0.6 && bPos.x >= 0.5 && bPos.z <= 0.75 && bPos.z >= 0.35) ||
+			(bPos.x <= 0.7 && bPos.x >= 0.6 && bPos.z <= 0.75 && bPos.z >= 0.65) ||
+			(bPos.x <= 0.2 && bPos.x >= 0.1 && bPos.z <= 0.75 && bPos.z >= 0.25) ||
+			(bPos.x <= 0.4 && bPos.x >= 0.3 && bPos.z <= 0.75 && bPos.z >= 0.25) ||
+			(bPos.x <= 0.3 && bPos.x >= 0.2 && bPos.z <= 0.75 && bPos.z >= 0.65) ||
+			(bPos.x <= 0.3 && bPos.x >= 0.2 && bPos.z <= 0.35 && bPos.z >= 0.25)) {
 			isRsOverlay = true;  //信号强度10
 			};
 		} else if (v_color0.r > 0.8342157 && v_color0.r < 0.8442157 && (v_color0.g + v_color0.b) < 0.005) {
 			if (
-			(mod(floor(11.0 / exp2(floor(6.666667 * (cp.x - 0.1)))), 2.0) >= 0.5 && cp.z <= 0.15 && cp.z >= 0.1) ||
-			(cp.x <= 0.7 && cp.x >= 0.4 && cp.z <= 0.35 && cp.z >= 0.25) ||
-			(cp.x <= 0.6 && cp.x >= 0.5 && cp.z <= 0.75 && cp.z >= 0.35) ||
-			(cp.x <= 0.7 && cp.x >= 0.6 && cp.z <= 0.75 && cp.z >= 0.65) ||
-			(cp.x <= 0.4 && cp.x >= 0.1 && cp.z <= 0.35 && cp.z >= 0.25) ||
-			(cp.x <= 0.3 && cp.x >= 0.2 && cp.z <= 0.75 && cp.z >= 0.35) ||
-			(cp.x <= 0.4 && cp.x >= 0.3 && cp.z <= 0.75 && cp.z >= 0.65)) {
+			(mod(floor(11.0 / exp2(floor(6.666667 * (bPos.x - 0.1)))), 2.0) >= 0.5 && bPos.z <= 0.15 && bPos.z >= 0.1) ||
+			(bPos.x <= 0.7 && bPos.x >= 0.4 && bPos.z <= 0.35 && bPos.z >= 0.25) ||
+			(bPos.x <= 0.6 && bPos.x >= 0.5 && bPos.z <= 0.75 && bPos.z >= 0.35) ||
+			(bPos.x <= 0.7 && bPos.x >= 0.6 && bPos.z <= 0.75 && bPos.z >= 0.65) ||
+			(bPos.x <= 0.4 && bPos.x >= 0.1 && bPos.z <= 0.35 && bPos.z >= 0.25) ||
+			(bPos.x <= 0.3 && bPos.x >= 0.2 && bPos.z <= 0.75 && bPos.z >= 0.35) ||
+			(bPos.x <= 0.4 && bPos.x >= 0.3 && bPos.z <= 0.75 && bPos.z >= 0.65)) {
 			isRsOverlay = true;  //信号强度11
 			};
 		} else if (v_color0.r > 0.8734314 && v_color0.r < 0.8834314 && (v_color0.g + v_color0.b) < 0.005) {
 			if (
-			(mod(floor(12.0 / exp2(floor(6.666667 * (cp.x - 0.1)))), 2.0) >= 0.5 && cp.z <= 0.15 && cp.z >= 0.1) ||
-			(cp.x <= 0.7 && cp.x >= 0.4 && cp.z <= 0.35 && cp.z >= 0.25) ||
-			(cp.x <= 0.6 && cp.x >= 0.5 && cp.z <= 0.75 && cp.z >= 0.35) ||
-			(cp.x <= 0.7 && cp.x >= 0.6 && cp.z <= 0.75 && cp.z >= 0.65) ||
-			(cp.x <= 0.3 && cp.x >= 0.2 && cp.z <= 0.55 && cp.z >= 0.45) ||
-			(cp.x <= 0.2 && cp.x >= 0.1 && cp.z <= 0.75 && cp.z >= 0.45) ||
-			(cp.x <= 0.4 && cp.x >= 0.3 && cp.z <= 0.55 && cp.z >= 0.25) ||
-			(cp.x <= 0.3 && cp.x >= 0.1 && cp.z <= 0.35 && cp.z >= 0.25) ||
-			(cp.x <= 0.4 && cp.x >= 0.2 && cp.z <= 0.75 && cp.z >= 0.65)) {
+			(mod(floor(12.0 / exp2(floor(6.666667 * (bPos.x - 0.1)))), 2.0) >= 0.5 && bPos.z <= 0.15 && bPos.z >= 0.1) ||
+			(bPos.x <= 0.7 && bPos.x >= 0.4 && bPos.z <= 0.35 && bPos.z >= 0.25) ||
+			(bPos.x <= 0.6 && bPos.x >= 0.5 && bPos.z <= 0.75 && bPos.z >= 0.35) ||
+			(bPos.x <= 0.7 && bPos.x >= 0.6 && bPos.z <= 0.75 && bPos.z >= 0.65) ||
+			(bPos.x <= 0.3 && bPos.x >= 0.2 && bPos.z <= 0.55 && bPos.z >= 0.45) ||
+			(bPos.x <= 0.2 && bPos.x >= 0.1 && bPos.z <= 0.75 && bPos.z >= 0.45) ||
+			(bPos.x <= 0.4 && bPos.x >= 0.3 && bPos.z <= 0.55 && bPos.z >= 0.25) ||
+			(bPos.x <= 0.3 && bPos.x >= 0.1 && bPos.z <= 0.35 && bPos.z >= 0.25) ||
+			(bPos.x <= 0.4 && bPos.x >= 0.2 && bPos.z <= 0.75 && bPos.z >= 0.65)) {
 			isRsOverlay = true;  //信号强度12
 			};
 		} else if (v_color0.r > 0.9126471 && v_color0.r < 0.9226471 && v_color0.g > 0.01852941 && v_color0.g < 0.02852941 && v_color0.b < 0.005) {
 			if (
-			(mod(floor(13.0 / exp2(floor(6.666667 * (cp.x - 0.1)))), 2.0) >= 0.5 && cp.z <= 0.15 && cp.z >= 0.1) ||
-			(cp.x <= 0.7 && cp.x >= 0.4 && cp.z <= 0.35 && cp.z >= 0.25) ||
-			(cp.x <= 0.6 && cp.x >= 0.5 && cp.z <= 0.75 && cp.z >= 0.35) ||
-			(cp.x <= 0.7 && cp.x >= 0.6 && cp.z <= 0.75 && cp.z >= 0.65) ||
-			(cp.x <= 0.2 && cp.x >= 0.1 && cp.z <= 0.75 && cp.z >= 0.25) ||
-			(cp.x <= 0.4 && cp.x >= 0.2 && cp.z <= 0.55 && cp.z >= 0.45) ||
-			(cp.x <= 0.4 && cp.x >= 0.2 && cp.z <= 0.35 && cp.z >= 0.25) ||
-			(cp.x <= 0.4 && cp.x >= 0.2 && cp.z <= 0.75 && cp.z >= 0.65)) {
+			(mod(floor(13.0 / exp2(floor(6.666667 * (bPos.x - 0.1)))), 2.0) >= 0.5 && bPos.z <= 0.15 && bPos.z >= 0.1) ||
+			(bPos.x <= 0.7 && bPos.x >= 0.4 && bPos.z <= 0.35 && bPos.z >= 0.25) ||
+			(bPos.x <= 0.6 && bPos.x >= 0.5 && bPos.z <= 0.75 && bPos.z >= 0.35) ||
+			(bPos.x <= 0.7 && bPos.x >= 0.6 && bPos.z <= 0.75 && bPos.z >= 0.65) ||
+			(bPos.x <= 0.2 && bPos.x >= 0.1 && bPos.z <= 0.75 && bPos.z >= 0.25) ||
+			(bPos.x <= 0.4 && bPos.x >= 0.2 && bPos.z <= 0.55 && bPos.z >= 0.45) ||
+			(bPos.x <= 0.4 && bPos.x >= 0.2 && bPos.z <= 0.35 && bPos.z >= 0.25) ||
+			(bPos.x <= 0.4 && bPos.x >= 0.2 && bPos.z <= 0.75 && bPos.z >= 0.65)) {
 			isRsOverlay = true;  //信号强度13
 			};
 		} else if (v_color0.r > 0.9518628 && v_color0.r < 0.9618627 && v_color0.g > 0.1008824 && v_color0.g < 0.1108824 && v_color0.b < 0.005) {
 			if (
-			(mod(floor(14.0 / exp2(floor(6.666667 * (cp.x - 0.1)))), 2.0) >= 0.5 && cp.z <= 0.15 && cp.z >= 0.1) ||
-			(cp.x <= 0.7 && cp.x >= 0.4 && cp.z <= 0.35 && cp.z >= 0.25) ||
-			(cp.x <= 0.6 && cp.x >= 0.5 && cp.z <= 0.75 && cp.z >= 0.35) ||
-			(cp.x <= 0.7 && cp.x >= 0.6 && cp.z <= 0.75 && cp.z >= 0.65) ||
-			(cp.x <= 0.2 && cp.x >= 0.1 && cp.z <= 0.75 && cp.z >= 0.25) ||
-			(cp.x <= 0.4 && cp.x >= 0.3 && cp.z <= 0.75 && cp.z >= 0.45) ||
-			(cp.x <= 0.3 && cp.x >= 0.2 && cp.z <= 0.55 && cp.z >= 0.45)) {
+			(mod(floor(14.0 / exp2(floor(6.666667 * (bPos.x - 0.1)))), 2.0) >= 0.5 && bPos.z <= 0.15 && bPos.z >= 0.1) ||
+			(bPos.x <= 0.7 && bPos.x >= 0.4 && bPos.z <= 0.35 && bPos.z >= 0.25) ||
+			(bPos.x <= 0.6 && bPos.x >= 0.5 && bPos.z <= 0.75 && bPos.z >= 0.35) ||
+			(bPos.x <= 0.7 && bPos.x >= 0.6 && bPos.z <= 0.75 && bPos.z >= 0.65) ||
+			(bPos.x <= 0.2 && bPos.x >= 0.1 && bPos.z <= 0.75 && bPos.z >= 0.25) ||
+			(bPos.x <= 0.4 && bPos.x >= 0.3 && bPos.z <= 0.75 && bPos.z >= 0.45) ||
+			(bPos.x <= 0.3 && bPos.x >= 0.2 && bPos.z <= 0.55 && bPos.z >= 0.45)) {
 			isRsOverlay = true;  //信号强度14
 			};
 		};
@@ -308,15 +334,15 @@ if (!(oreTest.a == 1.00)){
 		) {
 		float testLightMap;
 		
-        cp.x = cp.x - 0.13;
+        bPos.x = bPos.x - 0.13;
 		
-		if (cp.x <= 0.7 && cp.x >= 0.1 && cp.z <= 0.75 && cp.z >= 0.25) {
+		if (bPos.x <= 0.7 && bPos.x >= 0.1 && bPos.z <= 0.75 && bPos.z >= 0.25) {
 			setLiOverlay = 1;
 			testLightMap = v_lightmapUV.x; //中心区域选择方块光照
 		} else {
-			cp.x = ((cp.x * 2.0) + 0.55);
-			cp.z = ((cp.z * 2.0) - 0.25);
-			if (cp.x <= 0.7 && cp.x >= 0.1 && cp.z <= 0.75 && cp.z >= 0.25) {
+			bPos.x = ((bPos.x * 2.0) + 0.55);
+			bPos.z = ((bPos.z * 2.0) - 0.25);
+			if (bPos.x <= 0.7 && bPos.x >= 0.1 && bPos.z <= 0.75 && bPos.z >= 0.25) {
 				setLiOverlay = 5;
 				testLightMap = v_lightmapUV.y;  //右下方选择天空光照
 			};
@@ -325,150 +351,150 @@ if (!(oreTest.a == 1.00)){
 		if (!(setLiOverlay == 0)) {
 			if (testLightMap <0.0625) {
 				if (
-				(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.25)||
-				(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.75 && cp.z >= 0.25)||
-				(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.75 && cp.z >= 0.65)||
-				(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.35 && cp.z >= 0.25)) {
+				(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.25)||
+				(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.75 && bPos.z >= 0.25)||
+				(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.75 && bPos.z >= 0.65)||
+				(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.35 && bPos.z >= 0.25)) {
 				setLiOverlay += 2;  //光照等级0
 				};
 			} else if (testLightMap >= 0.9375) {
 				if (
-				(cp.x <= 0.7 && cp.x >= 0.4 && cp.z <= 0.35 && cp.z >= 0.25) || 
-				(cp.x <= 0.6 && cp.x >= 0.5 && cp.z <= 0.75 && cp.z >= 0.35) || 
-				(cp.x <= 0.7 && cp.x >= 0.6 && cp.z <= 0.75 && cp.z >= 0.65) || 
-				(cp.x <= 0.3 && cp.x >= 0.2 && cp.z <= 0.55 && cp.z >= 0.45) || 
-				(cp.x <= 0.2 && cp.x >= 0.1 && cp.z <= 0.55 && cp.z >= 0.25) || 
-				(cp.x <= 0.4 && cp.x >= 0.3 && cp.z <= 0.75 && cp.z >= 0.45) || 
-				(cp.x <= 0.3 && cp.x >= 0.1 && cp.z <= 0.75 && cp.z >= 0.65) || 
-				(cp.x <= 0.4 && cp.x >= 0.2 && cp.z <= 0.35 && cp.z >= 0.25)) {
+				(bPos.x <= 0.7 && bPos.x >= 0.4 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.6 && bPos.x >= 0.5 && bPos.z <= 0.75 && bPos.z >= 0.35) || 
+				(bPos.x <= 0.7 && bPos.x >= 0.6 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+				(bPos.x <= 0.3 && bPos.x >= 0.2 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.2 && bPos.x >= 0.1 && bPos.z <= 0.55 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.4 && bPos.x >= 0.3 && bPos.z <= 0.75 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.3 && bPos.x >= 0.1 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+				(bPos.x <= 0.4 && bPos.x >= 0.2 && bPos.z <= 0.35 && bPos.z >= 0.25)) {
 				setLiOverlay += 1;  //光照等级15
 				};
 			} else if (testLightMap >= 0.0625 && testLightMap < 0.125) {
 				if (
-				(cp.x <= 0.55 && cp.x >= 0.25 && cp.z <= 0.35 && cp.z >= 0.25) ||
-				(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.75 && cp.z >= 0.35) || 
-				(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.75 && cp.z >= 0.65)) {
+				(bPos.x <= 0.55 && bPos.x >= 0.25 && bPos.z <= 0.35 && bPos.z >= 0.25) ||
+				(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.75 && bPos.z >= 0.35) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.75 && bPos.z >= 0.65)) {
 				setLiOverlay += 1;  //光照等级1
 				};
 			} else if (testLightMap >= 0.125 && testLightMap < 0.1875) {
 				if (
-				(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.55 && cp.z >= 0.45) || 
-				(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.45) || 
-				(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.55 && cp.z >= 0.25) || 
-				(cp.x <= 0.45 && cp.x >= 0.25 && cp.z <= 0.35 && cp.z >= 0.25) || 
-				(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.75 && cp.z >= 0.65)) {
+				(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.55 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.45 && bPos.x >= 0.25 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.75 && bPos.z >= 0.65)) {
 				setLiOverlay += 1;  //光照等级2
 				};
 			} else if (testLightMap >= 0.1875 && testLightMap < 0.25) {
 				if (
-				(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.25) || 
-				(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.55 && cp.z >= 0.45) || 
-				(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.35 && cp.z >= 0.25) || 
-				(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.75 && cp.z >= 0.65)) {
+				(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.75 && bPos.z >= 0.65)) {
 				setLiOverlay += 1;  //光照等级3
 				};
 			} else if (testLightMap >= 0.25 && testLightMap < 0.3125) {
 				if (
-				(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.25) || 
-				(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.75 && cp.z >= 0.45) || 
-				(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.55 && cp.z >= 0.45)) {
+				(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.75 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.55 && bPos.z >= 0.45)) {
 				setLiOverlay += 1;  //光照等级4
 				};
 			} else if (testLightMap >= 0.3125 && testLightMap < 0.375) {
 				if (
-				(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.55 && cp.z >= 0.45) || 
-				(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.55 && cp.z >= 0.25) || 
-				(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.75 && cp.z >= 0.45) || 
-				(cp.x <= 0.45 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.65) || 
-				(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.35 && cp.z >= 0.25)) {
+				(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.55 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.75 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.45 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.35 && bPos.z >= 0.25)) {
 				setLiOverlay += 1;  //光照等级5
 				};
 			} else if (testLightMap >= 0.375 && testLightMap < 0.4375) {
 				if (
-				(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.55 && cp.z >= 0.45) || 
-				(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.55 && cp.z >= 0.25) || 
-				(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.75 && cp.z >= 0.35) || 
-				(cp.x <= 0.45 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.65) || 
-				(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.35 && cp.z >= 0.25)) {
+				(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.55 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.75 && bPos.z >= 0.35) || 
+				(bPos.x <= 0.45 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.35 && bPos.z >= 0.25)) {
 				setLiOverlay += 1;  //光照等级6
 				};
 			} else if (testLightMap >= 0.4375 && testLightMap < 0.5) {
 				if (
-				(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.25) || 
-				(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.75 && cp.z >= 0.65) || 
-				(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.65 && cp.z >= 0.55)) {
+				(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.65 && bPos.z >= 0.55)) {
 				setLiOverlay += 1;  //光照等级7
 				};
 			} else if (testLightMap >= 0.5 && testLightMap < 0.5625) {
 				if (
-				(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.55 && cp.z >= 0.45) || 
-				(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.25) || 
-				(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.75 && cp.z >= 0.25) || 
-				(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.75 && cp.z >= 0.65) || 
-				(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.35 && cp.z >= 0.25)) {
+				(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+				(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.35 && bPos.z >= 0.25)) {
 				setLiOverlay += 1;  //光照等级8
 				};
 			} else if (testLightMap >= 0.5625 && testLightMap < 0.625) {
 				if (
-				(cp.x <= 0.45 && cp.x >= 0.35 && cp.z <= 0.55 && cp.z >= 0.45) || 
-				(cp.x <= 0.35 && cp.x >= 0.25 && cp.z <= 0.75 && cp.z >= 0.35) || 
-				(cp.x <= 0.55 && cp.x >= 0.45 && cp.z <= 0.75 && cp.z >= 0.45) || 
-				(cp.x <= 0.55 && cp.x >= 0.25 && cp.z <= 0.35 && cp.z >= 0.25) || 
-				(cp.x <= 0.55 && cp.x >= 0.35 && cp.z <= 0.75 && cp.z >= 0.65)) {
+				(bPos.x <= 0.45 && bPos.x >= 0.35 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.35 && bPos.x >= 0.25 && bPos.z <= 0.75 && bPos.z >= 0.35) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.45 && bPos.z <= 0.75 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.25 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.55 && bPos.x >= 0.35 && bPos.z <= 0.75 && bPos.z >= 0.65)) {
 				setLiOverlay += 1;  //光照等级9
 				};
 			} else if (testLightMap >= 0.625 && testLightMap < 0.6875) {
 				if (
-				(cp.x <= 0.7 && cp.x >= 0.4 && cp.z <= 0.35 && cp.z >= 0.25) || 
-				(cp.x <= 0.6 && cp.x >= 0.5 && cp.z <= 0.75 && cp.z >= 0.35) || 
-				(cp.x <= 0.7 && cp.x >= 0.6 && cp.z <= 0.75 && cp.z >= 0.65) || 
-				(cp.x <= 0.2 && cp.x >= 0.1 && cp.z <= 0.75 && cp.z >= 0.25) || 
-				(cp.x <= 0.4 && cp.x >= 0.3 && cp.z <= 0.75 && cp.z >= 0.25) || 
-				(cp.x <= 0.3 && cp.x >= 0.2 && cp.z <= 0.75 && cp.z >= 0.65) || 
-				(cp.x <= 0.3 && cp.x >= 0.2 && cp.z <= 0.35 && cp.z >= 0.25)) {
+				(bPos.x <= 0.7 && bPos.x >= 0.4 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.6 && bPos.x >= 0.5 && bPos.z <= 0.75 && bPos.z >= 0.35) || 
+				(bPos.x <= 0.7 && bPos.x >= 0.6 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+				(bPos.x <= 0.2 && bPos.x >= 0.1 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.4 && bPos.x >= 0.3 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.3 && bPos.x >= 0.2 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+				(bPos.x <= 0.3 && bPos.x >= 0.2 && bPos.z <= 0.35 && bPos.z >= 0.25)) {
 				setLiOverlay += 1;  //光照等级10
 				};
 			} else if (testLightMap >= 0.6875 && testLightMap < 0.75) {
 				if (
-				(cp.x <= 0.7 && cp.x >= 0.4 && cp.z <= 0.35 && cp.z >= 0.25) || 
-				(cp.x <= 0.6 && cp.x >= 0.5 && cp.z <= 0.75 && cp.z >= 0.35) || 
-				(cp.x <= 0.7 && cp.x >= 0.6 && cp.z <= 0.75 && cp.z >= 0.65) || 
-				(cp.x <= 0.4 && cp.x >= 0.1 && cp.z <= 0.35 && cp.z >= 0.25) || 
-				(cp.x <= 0.3 && cp.x >= 0.2 && cp.z <= 0.75 && cp.z >= 0.35) || 
-				(cp.x <= 0.4 && cp.x >= 0.3 && cp.z <= 0.75 && cp.z >= 0.65)) {
+				(bPos.x <= 0.7 && bPos.x >= 0.4 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.6 && bPos.x >= 0.5 && bPos.z <= 0.75 && bPos.z >= 0.35) || 
+				(bPos.x <= 0.7 && bPos.x >= 0.6 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+				(bPos.x <= 0.4 && bPos.x >= 0.1 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.3 && bPos.x >= 0.2 && bPos.z <= 0.75 && bPos.z >= 0.35) || 
+				(bPos.x <= 0.4 && bPos.x >= 0.3 && bPos.z <= 0.75 && bPos.z >= 0.65)) {
 				setLiOverlay += 1;  //光照等级11
 				};
 			} else if (testLightMap >= 0.75 && testLightMap < 0.8125) {
 				if (
-				(cp.x <= 0.7 && cp.x >= 0.4 && cp.z <= 0.35 && cp.z >= 0.25) || 
-				(cp.x <= 0.6 && cp.x >= 0.5 && cp.z <= 0.75 && cp.z >= 0.35) || 
-				(cp.x <= 0.7 && cp.x >= 0.6 && cp.z <= 0.75 && cp.z >= 0.65) || 
-				(cp.x <= 0.3 && cp.x >= 0.2 && cp.z <= 0.55 && cp.z >= 0.45) || 
-				(cp.x <= 0.2 && cp.x >= 0.1 && cp.z <= 0.75 && cp.z >= 0.45) || 
-				(cp.x <= 0.4 && cp.x >= 0.3 && cp.z <= 0.55 && cp.z >= 0.25) || 
-				(cp.x <= 0.3 && cp.x >= 0.1 && cp.z <= 0.35 && cp.z >= 0.25) || 
-				(cp.x <= 0.4 && cp.x >= 0.2 && cp.z <= 0.75 && cp.z >= 0.65)) {
+				(bPos.x <= 0.7 && bPos.x >= 0.4 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.6 && bPos.x >= 0.5 && bPos.z <= 0.75 && bPos.z >= 0.35) || 
+				(bPos.x <= 0.7 && bPos.x >= 0.6 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+				(bPos.x <= 0.3 && bPos.x >= 0.2 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.2 && bPos.x >= 0.1 && bPos.z <= 0.75 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.4 && bPos.x >= 0.3 && bPos.z <= 0.55 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.3 && bPos.x >= 0.1 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.4 && bPos.x >= 0.2 && bPos.z <= 0.75 && bPos.z >= 0.65)) {
 				setLiOverlay += 1;  //光照等级12
 				};
 			} else if (testLightMap >= 0.8125 && testLightMap < 0.875) {
 				if (
-				(cp.x <= 0.7 && cp.x >= 0.4 && cp.z <= 0.35 && cp.z >= 0.25) || 
-				(cp.x <= 0.6 && cp.x >= 0.5 && cp.z <= 0.75 && cp.z >= 0.35) || 
-				(cp.x <= 0.7 && cp.x >= 0.6 && cp.z <= 0.75 && cp.z >= 0.65) || 
-				(cp.x <= 0.2 && cp.x >= 0.1 && cp.z <= 0.75 && cp.z >= 0.25) || 
-				(cp.x <= 0.4 && cp.x >= 0.2 && cp.z <= 0.55 && cp.z >= 0.45) || 
-				(cp.x <= 0.4 && cp.x >= 0.2 && cp.z <= 0.35 && cp.z >= 0.25) || 
-				(cp.x <= 0.4 && cp.x >= 0.2 && cp.z <= 0.75 && cp.z >= 0.65)) {
+				(bPos.x <= 0.7 && bPos.x >= 0.4 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.6 && bPos.x >= 0.5 && bPos.z <= 0.75 && bPos.z >= 0.35) || 
+				(bPos.x <= 0.7 && bPos.x >= 0.6 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+				(bPos.x <= 0.2 && bPos.x >= 0.1 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.4 && bPos.x >= 0.2 && bPos.z <= 0.55 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.4 && bPos.x >= 0.2 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.4 && bPos.x >= 0.2 && bPos.z <= 0.75 && bPos.z >= 0.65)) {
 				setLiOverlay += 1;  //光照等级13
 				};
 			} else if (testLightMap >= 0.875 && testLightMap < 0.9375) {
 				if (
-				(cp.x <= 0.7 && cp.x >= 0.4 && cp.z <= 0.35 && cp.z >= 0.25) || 
-				(cp.x <= 0.6 && cp.x >= 0.5 && cp.z <= 0.75 && cp.z >= 0.35) || 
-				(cp.x <= 0.7 && cp.x >= 0.6 && cp.z <= 0.75 && cp.z >= 0.65) || 
-				(cp.x <= 0.2 && cp.x >= 0.1 && cp.z <= 0.75 && cp.z >= 0.25) || 
-				(cp.x <= 0.4 && cp.x >= 0.3 && cp.z <= 0.75 && cp.z >= 0.45) || 
-				(cp.x <= 0.3 && cp.x >= 0.2 && cp.z <= 0.55 && cp.z >= 0.45)) {
+				(bPos.x <= 0.7 && bPos.x >= 0.4 && bPos.z <= 0.35 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.6 && bPos.x >= 0.5 && bPos.z <= 0.75 && bPos.z >= 0.35) || 
+				(bPos.x <= 0.7 && bPos.x >= 0.6 && bPos.z <= 0.75 && bPos.z >= 0.65) || 
+				(bPos.x <= 0.2 && bPos.x >= 0.1 && bPos.z <= 0.75 && bPos.z >= 0.25) || 
+				(bPos.x <= 0.4 && bPos.x >= 0.3 && bPos.z <= 0.75 && bPos.z >= 0.45) || 
+				(bPos.x <= 0.3 && bPos.x >= 0.2 && bPos.z <= 0.55 && bPos.z >= 0.45)) {
 				setLiOverlay += 1;  //光照等级14
 				};
 			};
@@ -497,7 +523,17 @@ if (!(oreTest.a == 1.00)){
 #else
 	#ifndef NIGHT_VISION
 	if (needLightMap) {
+		
+		/*
+		vec2 lightUV = v_lightmapUV;
+		lightUV.x = 1.0 - lightUV.x;
+		lightUV.y = 1.0 - lightUV.y;
+		diffuse.rgb *= texture2D(s_LightMapTexture,lightUV).rgb;
+		*/
+		
+		
 		diffuse.rgb *= texture2D(s_LightMapTexture, v_lightmapUV).rgb;  //设置是否夜视
+		
 	};
 	#endif
 #endif
@@ -507,26 +543,32 @@ if (!(oreTest.a == 1.00)){
 #if (defined(OPAQUE) || defined(ALPHA_TEST) || defined(TRANSPARENT)) && !(defined(INSTANCING) || defined(RENDER_AS_BILLBOARDS))
 
 	#ifdef CHUNK_BORDERS
-	cp = fract(chunkPos.xyz);
+	bPos = fract(chunkPos.xyz);
 	if (
 		((chunkPos.x < 0.0625 || chunkPos.x > 15.9375) && (chunkPos.z < 0.0625 || chunkPos.z > 15.9375)) || 
 		((chunkPos.y < 0.0625 || chunkPos.y > 15.9375) && (chunkPos.x < 0.0625 || chunkPos.x > 15.9375)) || 
-		((chunkPos.y < 0.0625 || chunkPos.y > 15.9375) && (chunkPos.z < 0.0625 || chunkPos.z > 15.9375))) {
-			if (chunkPos.x < 0.0625 && chunkPos.z < 0.0625) {
-				diffuse.rgb = mix (diffuse.rgb, vec3(0.0, 1.0, 0.0), 0.26); //y轴绿色显示
-			} else if (chunkPos.z < 0.0625 && chunkPos.x < 15.9375) {
-				diffuse.rgb = mix (diffuse.rgb, vec3(0.8, 0.0, 0.2), 0.22); //x轴红色显示
-			} else if (chunkPos.x < 0.0625) {
-				diffuse.rgb = mix (diffuse.rgb, vec3(0.0, 0.0, 0.8), 0.22); //z轴蓝色显示
-			} else {
-				diffuse.rgb = mix (diffuse.rgb, vec3(0.1, 0.1, 1.0), 0.17); //其于部分蓝色显示
-			};
+		((chunkPos.y < 0.0625 || chunkPos.y > 15.9375) && (chunkPos.z < 0.0625 || chunkPos.z > 15.9375))
+	) {
+		if (chunkPos.x < 0.0625 && chunkPos.z < 0.0625) {
+			diffuse.rgb = mix (diffuse.rgb, vec3(0.0, 1.0, 0.0), 0.26); //y轴绿色显示
+		} else if (chunkPos.z < 0.0625 && chunkPos.x < 15.9375) {
+			diffuse.rgb = mix (diffuse.rgb, vec3(0.8, 0.0, 0.2), 0.22); //x轴红色显示
+		} else if (chunkPos.x < 0.0625) {
+			diffuse.rgb = mix (diffuse.rgb, vec3(0.0, 0.0, 0.8), 0.22); //z轴蓝色显示
+		} else {
+			diffuse.rgb = mix (diffuse.rgb, vec3(0.1, 0.1, 1.0), 0.17); //其于部分蓝色显示
+		};
 	} else if (
-		((chunkPos.x < 0.03125 || chunkPos.x > 15.96875) || (chunkPos.z < 0.03125 || chunkPos.z > 15.96875)) && (
-		((cp.x < 0.03125 || cp.x > 0.96875) && (cp.y < 0.03125 || cp.y > 0.96875)) || 
-		((cp.x < 0.03125 || cp.x > 0.96875) && (cp.z < 0.03125 || cp.z > 0.96875)) ||
-		((cp.y < 0.03125 || cp.y > 0.96875) && (cp.z < 0.03125 || cp.z > 0.96875)))) {
-			diffuse.rgb = ((diffuse.rgb / 0.4) * (vec3(1.0, 1.0, 1.0) - diffuse.rgb));  //其它部分白线显示
+		((bPos.x < 0.03125 || bPos.x > 0.96875) && (bPos.y < 0.03125 || bPos.y > 0.96875)) || 
+		((bPos.x < 0.03125 || bPos.x > 0.96875) && (bPos.z < 0.03125 || bPos.z > 0.96875)) ||
+		((bPos.y < 0.03125 || bPos.y > 0.96875) && (bPos.z < 0.03125 || bPos.z > 0.96875))
+	) {
+		if (
+			((chunkPos.x < 0.03125 || chunkPos.x > 15.96875) || (chunkPos.z < 0.03125 || chunkPos.z > 15.96875)) ||
+			((chunkPos.x < 0.09375 || chunkPos.x > 15.90625) || (chunkPos.z < 0.09375 || chunkPos.z > 15.90625))
+		) {
+			diffuse.rgb = ((diffuse.rgb / 0.4) * (vec3(1.0, 1.0, 1.0) - diffuse.rgb));  //每方块刻度白线
+		};
 	};
 	#endif
 	
@@ -601,11 +643,11 @@ if (!(oreTest.a == 1.00)){
 	//diffuse.rgb = floor(v_position.xyz)/vec3(16.0,16.0,16.0);
 	
 	#if (defined(OPAQUE) || defined(ALPHA_TEST) || defined(TRANSPARENT)) 
-	cp = fract(v_position.xyz);
+	bPos = fract(v_position.xyz);
 	if (
-	((cp.x < 0.03125 || cp.x > 0.96875) && (cp.y < 0.03125 || cp.y > 0.96875)) || 
-	((cp.x < 0.03125 || cp.x > 0.96875) && (cp.z < 0.03125 || cp.z > 0.96875)) ||
-	((cp.y < 0.03125 || cp.y > 0.96875) && (cp.z < 0.03125 || cp.z > 0.96875))) {
+	((bPos.x < 0.03125 || bPos.x > 0.96875) && (bPos.y < 0.03125 || bPos.y > 0.96875)) || 
+	((bPos.x < 0.03125 || bPos.x > 0.96875) && (bPos.z < 0.03125 || bPos.z > 0.96875)) ||
+	((bPos.y < 0.03125 || bPos.y > 0.96875) && (bPos.z < 0.03125 || bPos.z > 0.96875))) {
 		
 		//diffuse.rgb = ViewPositionAndTime.www;
 		
@@ -638,12 +680,17 @@ if (!(oreTest.a == 1.00)){
 	};
 	#endif
 
-//	diffuse.rgb = v_color0.rgb;
-//	diffuse.rgb = v_color0.aaa;
-	
 
 #endif	
 
+
+	//	diffuse.rgb = v_color0.rgb;
+	//	diffuse.rgb = v_color0.aaa;
+		
+	//	diffuse.a =  v_color0.a;
+	//	diffuse.a =  1.0;
+	
+	
 	vec2 uv0 = v_texcoord0;
 	if (fract(v_position.y) < 0.01) {
 		
@@ -660,7 +707,8 @@ if (!(oreTest.a == 1.00)){
 		
 	}
 	
-	//diffuse = vec4(1.0,1.0,1.0,1.0);
+	//	diffuse = vec4(1.0,1.0,1.0,1.0);
+	//	diffuse = vec4(0.5,0.5,0.5,1.0);
 	
     gl_FragColor = diffuse;
 } 
