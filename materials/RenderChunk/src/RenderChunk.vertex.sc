@@ -4,20 +4,21 @@ $input a_color0, a_position, a_texcoord0, a_texcoord1
     $input i_data0, i_data1, i_data2, i_data3
 #endif
 
-$output v_color0, v_texcoord0, v_lightmapUV, v_position, v_worldpos
+$output v_color0, v_texcoord0, v_lightmapUV, v_position, v_worldpos, v_fog
 
 
 #include <bgfx_shader.sh>
+#include <defines.sh>
+
 
 #ifndef NO_FOG
 
-//	$output v_fog
-	uniform vec4 RenderChunkFogAlpha;
-	uniform vec4 FogAndDistanceControl;
-	uniform vec4 FogColor;
 
 #endif
 
+uniform vec4 FogColor;
+uniform vec4 RenderChunkFogAlpha;
+uniform vec4 FogAndDistanceControl;
 uniform vec4 ViewPositionAndTime;
 
 
@@ -97,6 +98,14 @@ void main() {
 
 */
 
+#ifdef CHUNK_ANIM
+	// slide in anim
+	worldPos.y -= CHUNK_ANIM*pow(RenderChunkFogAlpha.x,3.0);
+
+	//worldPos.y += fract(cPos.x) + fract(cPos.z);
+#endif
+
+
     v_texcoord0 = a_texcoord0;
     v_lightmapUV = a_texcoord1;
     v_color0 = color;
@@ -105,16 +114,23 @@ void main() {
 
 #ifndef NO_FOG
 
-//	vec3 modelCamPos = (ViewPositionAndTime.xyz - worldPos);
-//	float camDis = length(modelCamPos);
-//	vec4 fogColor;
-//	fogColor.rgb = FogColor.rgb;
-//	fogColor.a = clamp(((((camDis / FogAndDistanceControl.z) + RenderChunkFogAlpha.x) -
-//	FogAndDistanceControl.x) / (FogAndDistanceControl.y - FogAndDistanceControl.x)), 0.0, 1.0);
-//	v_fog = fogColor;
+	vec3 modelCamPos = (ViewPositionAndTime.xyz - worldPos);
+	float camDis = length(modelCamPos);
+	vec4 fogColor;
+	fogColor.rgb = FogColor.rgb;
+	fogColor.a = clamp(((((camDis / FogAndDistanceControl.z) + RenderChunkFogAlpha.x) -
+	FogAndDistanceControl.x) / (FogAndDistanceControl.y - FogAndDistanceControl.x)), 0.0, 1.0);
+	
+	fogColor.a = RenderChunkFogAlpha.x;
+	//fogColor.a = camDis;
+		
+	v_fog = fogColor;
 
 #endif
 
+	//worldPos.y += fract(ViewPositionAndTime.w);
+	
+	//worldPos.xyz += ViewPositionAndTime.xyz;
 
     gl_Position = mul(u_viewProj, vec4(worldPos, 1.0));
 }
