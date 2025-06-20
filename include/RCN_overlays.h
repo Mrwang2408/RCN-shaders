@@ -8,14 +8,10 @@ int runChunkBorder(vec3 cp) {
 		((cp.x < 0.0625 || cp.x > 15.9375) && (cp.z < 0.0625 || cp.z > 15.9375)) || 
 		((cp.y < 0.0625 || cp.y > 15.9375) && (cp.x < 0.0625 || cp.x > 15.9375)) || 
 		((cp.y < 0.0625 || cp.y > 15.9375) && (cp.z < 0.0625 || cp.z > 15.9375))) {
-		if (cp.x < 0.0625 && cp.z < 0.0625) {
-			return 3; //y轴绿色显示
-		} else if (cp.z < 0.0625 && cp.x < 15.9375) {
-			return 4; //x轴红色显示
-		} else if (cp.x < 0.0625) {
-			return 5; //z轴蓝色显示
-		} else {
-			return 2; //其于部分蓝色显示
+		if (cp.x < 0.0625 && cp.z < 0.0625) {return 3; //y轴绿色显示
+		} else if (cp.z < 0.0625 && cp.x < 15.9375) {return 4; //x轴红色显示
+		} else if (cp.x < 0.0625) {return 5; //z轴深蓝色显示
+		} else {return 2; //其于部分蓝色显示
 		};
 	} else if (
 		((cp.x < 0.09375 || cp.x > 15.90625) || (cp.z < 0.09375 || cp.z > 15.90625)) && (
@@ -26,8 +22,7 @@ int runChunkBorder(vec3 cp) {
 	};
 	return 0;
 }
-	
-	
+
 /*
 int runChunkBorder(vec3 cp) {
 	vec3 bp = fract(cp);
@@ -79,10 +74,8 @@ int runChunkBorder(vec3 cp) {
 	return 0;
 }
 */
-	
-	
-	
-	
+
+
 bool runRsOverlay(vec3 color, vec3 cp) {
 	vec3 bp = fract(cp);//bPos: 每方块坐标（1x1x1）
 	#ifdef INVERT_NUM
@@ -261,10 +254,6 @@ bool runRsOverlay(vec3 color, vec3 cp) {
 	return false;
 }
 
-
-
-
-
 int runLiOverlay(vec2 lightUV, vec3 cp) {
 	int set = 0;
 	float light = 0.0;
@@ -441,12 +430,7 @@ int runLiOverlay(vec2 lightUV, vec3 cp) {
 	};
 	if (!(set == 0 || set == 1 || set == 5)) {
 		return set;
-	} else {
-		return 0;
 	};
+	return 0;
 }
-
-
-
-
 

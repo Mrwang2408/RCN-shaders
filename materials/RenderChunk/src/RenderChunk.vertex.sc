@@ -1,3 +1,4 @@
+
 $input a_color0, a_position, a_texcoord0, a_texcoord1
 
 #ifdef INSTANCING
@@ -6,29 +7,20 @@ $input a_color0, a_position, a_texcoord0, a_texcoord1
 
 $output v_color0, v_texcoord0, v_lightmapUV, v_position, v_worldpos, v_fog
 
-
 #include <bgfx_shader.sh>
 #include <defines.sh>
+#include <RCN_config.h>
 
-
-#ifndef NO_FOG
-
-
-#endif
-
-uniform vec4 FogColor;
 uniform vec4 RenderChunkFogAlpha;
 uniform vec4 FogAndDistanceControl;
 uniform vec4 ViewPositionAndTime;
+uniform vec4 FogColor;
 
-
-	SAMPLER2D(s_MatTexture, 0);
-
+//SAMPLER2D(s_MatTexture, 0);
 
 float Pow2(float x){
     return x * x;
 }
-
 
 void main() {
     mat4 model;
@@ -126,8 +118,13 @@ void main() {
 		
 	v_fog = fogColor;
 
+
 #endif
 
+	if (camDis > 1.0) {
+		//worldPos.y += 5.0;
+	};
+	
 	//worldPos.y += fract(ViewPositionAndTime.w);
 	
 	//worldPos.xyz += ViewPositionAndTime.xyz;
