@@ -22,6 +22,8 @@ float Pow2(float x){
     return x * x;
 }
 
+// #define a_texcoord1 vec2(fract(a_texcoord1.x*15.9375)+0.0001,floor(a_texcoord1.x*15.9375)*0.0625+0.0001)
+
 void main() {
     mat4 model;
 #ifdef INSTANCING
@@ -103,7 +105,16 @@ void main() {
     v_color0 = color;
 	v_worldpos = worldPos;
 	
-
+	
+	//v_lightmapUV = vec2(fract(a_texcoord1.x*15.9375),floor(a_texcoord1.x*15.9375)*0.0625)
+	
+	/*
+	v_lightmapUV = clamp(vec2(
+	float(uint(floor(a_texcoord1.x * 255.0)) & 15u),
+	float(uint(floor(a_texcoord1.x * 255.0)) >> 4u)
+	)* 0.0625, 0.0, 1.0);
+	*/
+	
 #ifndef NO_FOG
 
 	vec3 modelCamPos = (ViewPositionAndTime.xyz - worldPos);

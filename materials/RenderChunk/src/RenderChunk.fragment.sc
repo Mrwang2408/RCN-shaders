@@ -4,9 +4,9 @@ $input v_color0, v_texcoord0, v_lightmapUV, v_position, v_worldpos, v_fog
 
 #include <bgfx_shader.sh>
 #include <defines.sh>
-#include <RCN_overlays.h>
-#include <RCN_glow.h>
+#include <RCN_config.h>
 #include <RCN_apply.h>
+//#include <RCN_glow.h>
 
 SAMPLER2D(s_LightMapTexture, 0);
 SAMPLER2D(s_MatTexture, 1);
@@ -19,7 +19,10 @@ uniform vec4 FogColor;
 
 void main() {
     vec4 diffuse;
+	vec4 lightmap;
 	vec4 color = v_color0;
+	vec2 lightUV = v_lightmapUV;
+	vec3 chunkPos = v_position;  //chunkPos：每区块坐标（16x16x16）
 	
 	float time = ViewPositionAndTime.w;
 	
@@ -38,11 +41,12 @@ void main() {
 #if defined(DEPTH_ONLY_OPAQUE) || defined(DEPTH_ONLY)
     diffuse.rgb = vec3(1.0, 1.0, 1.0);
 	color = vec4(1.0,1.0,1.0,1.0);
+	// return;
 #else
 	diffuse = texture2D(s_MatTexture, v_texcoord0);
-
+	lightmap = texture2D(s_LightMapTexture, v_lightmapUV);
 	texCol = diffuse;
-	albedo = texCol * v_color0;
+	albedo = texCol * color;
 	
 	bool needDiscard = false;
 	#ifdef ALPHA_TEST
@@ -50,26 +54,24 @@ void main() {
 		if (diffuse.a < 0.5) {
 			needDiscard = true;
 		};
-	#endif
+	#endif //ALPHA_TEST
 	
 	#if defined(SEASONS) && (defined(ALPHA_TEST) || defined(OPAQUE))
-		diffuse.rgb *= mix(vec3(1.0, 1.0, 1.0), texture2D(s_SeasonsTexture, v_color0.xy).rgb * 2.0, v_color0.b);
-		diffuse.rgb *= v_color0.aaa;
+		diffuse.rgb *= mix(vec3(1.0, 1.0, 1.0), texture2D(s_SeasonsTexture, color.xy).rgb * 2.0, color.b);
+		diffuse.rgb *= color.aaa;
 	#else
-		diffuse *= v_color0;
-	#endif
+		diffuse *= color;
+	#endif //SEASONS
 	
 	
-	vec2 lightUV = v_lightmapUV;
 	bool needLightMap = true;
 	
-	vec3 chunkPos = v_position;  //chunkPos：每区块坐标（16x16x16）
 	
 	//vec3 normal = normalize(cross(dFdx(chunkPos), dFdy(chunkPos)));
 	bool isNormal = (normalize(cross(dFdx(chunkPos), dFdy(chunkPos))).y > 0.99);
 	//bool isNormal = (abs(normal.x) > 0.99 || abs(normal.y) > 0.99 || abs(normal.z) > 0.99);
-	//bool isRsDust = (isNormal && (v_color0.r > v_color0.g + v_color0.b));
-	bool isRsDust = (v_color0.r > v_color0.g + v_color0.b);
+	//bool isRsDust = (isNormal && (color.r > color.g + color.b));
+	bool isRsDust = (color.r > color.g + color.b);
 	
 	float checkDistance = length(v_worldpos);	
 	
@@ -93,13 +95,13 @@ void main() {
 	//diffuse.rgb = abs(normal.rgb);
 	
 	
-#endif
+#endif //DEPTH_ONLY
 
 
 #ifndef TRANSPARENT
-	diffuse.a = v_color0.a;
+	diffuse.a = color.a;
 	//diffuse.a =  1.0;
-#endif
+#endif //TRANSPARENT
 
 
 
@@ -140,13 +142,13 @@ if (!(oreTest.a == 1.00)){
 			//needDiscard = true;  //矿物透视Xray3
 			//discard;
 		};
-	#endif
+	#endif //OPAQUE
 };
 
 	
 	//vec3 glow = nlGlow(s_MatTexture, v_texcoord0, diffuse, 1.0);
 	
-	#endif
+	#endif //ORE_TEST
 //endif_RCN
 
 
@@ -154,20 +156,20 @@ if (!(oreTest.a == 1.00)){
 //RCN_overlays
 	#ifdef CHUNK_BORDERS
 	setChunkBorder = runChunkBorder(chunkPos.xyz);  //运行函数
-	#endif
+	#endif //CHUNK_BORDERS
 	
 	#ifdef REDSTONE_OVERLAY
 	if (isRsDust) {
 		needLightMap = false;  //使红石粉发光
 		if (isNormal && isRsDust) {
-			isRsOverlay = runRsOverlay(v_color0.rgb, chunkPos);  //运行函数
+			isRsOverlay = runRsOverlay(color.rgb, chunkPos);  //运行函数
 		};
 		if (isRsOverlay) {
 			needDiscard = false;  //修复字体被裁剪的问题
 			needLightMap = false;  //使字体不再变暗
 		};
 	};
-	#endif
+	#endif //REDSTONE_OVERLAY
 
 	#ifdef LIGHT_OVERLAY
 	if(isNormal &&
@@ -188,7 +190,7 @@ if (!(oreTest.a == 1.00)){
 		};
 		//#endif
 	};
-	#endif
+	#endif //LIGHT_OVERLAY
 //endif_RCN
 
 
@@ -197,18 +199,17 @@ if (!(oreTest.a == 1.00)){
         discard;
 		return;
     };
-#endif
+#endif //ALPHA_TEST
 
 #ifdef OPAQUE
     if (needDiscard) {
         //discard;
 		//return;
     };
-#endif
+#endif //OPAQUE
 
 
-#if defined(DEPTH_ONLY_OPAQUE) || defined(DEPTH_ONLY)
-#else
+#if !(defined(DEPTH_ONLY_OPAQUE) || defined(DEPTH_ONLY))
 	#ifndef NIGHT_VISION
 	if (needLightMap) {
 		//diffuse.rgb *= texture2D(s_LightMapTexture,lightUV).rgb;
@@ -219,17 +220,38 @@ if (!(oreTest.a == 1.00)){
 
 
 //RCN_apply
+//-----------------------------------
 	//diffuse = result;
 	#ifdef REDSTONE_OVERLAY  //RCN
-	if (isRsDust) {diffuse.rgb=applyRsOverlay(albedo.rgb,isRsOverlay);};
-	#endif
+	if (isRsDust) {
+		diffuse.rgb=applyRsOverlay(albedo.rgb,isRsOverlay);
+		float ambient_factor = 0.5625 + 0.5 * lightmap.r;
+		diffuse.rgb *= ambient_factor;
+	};
+	#endif  //REDSTONE_OVERLAY
+//-----------------------------------
 	#ifdef CHUNK_BORDERS //RCN
-	if (setChunkBorder!=0){diffuse.rgb=applyChunkBorder(diffuse.rgb,setChunkBorder);};
-	#endif
+	if (setChunkBorder!=0){
+		//diffuse.rgb=applyChunkBorder(diffuse.rgb,setChunkBorder);
+		//diffuse.rgb = mix(diffuse.rgb + 0.5, vec3(1.0) - diffuse.rgb, smoothstep(0.3, 0.6, max(diffuse.r, max(diffuse.g, diffuse.b))));
+		if (setChunkBorder == 1) {
+		diffuse.rgb = ((diffuse.rgb / 0.4) * (vec3(1.0, 1.0, 1.0) - diffuse.rgb)); 
+		} else {
+		vec4 ChunkColor = checkChunkColor(setChunkBorder);
+		diffuse.rgb = mix(diffuse.rgb, ChunkColor.rgb, ChunkColor.a);
+		};
+	};
+	#endif  //CHUNK_BORDERS
+//-----------------------------------
 	#ifdef LIGHT_OVERLAY  //RCN
-	if (checkDistance<32.0){diffuse.rgba=applyLiOverlay(diffuse.rgba,setLiOverlay);};
-	#endif
+	if (checkDistance<32.0){
+		//diffuse.rgba=applyLiOverlay(diffuse.rgba,setLiOverlay);
+		vec4 LiOverlay = checkLiOverlay(setLiOverlay);
+		diffuse.rgb = mix(diffuse.rgb, LiOverlay.rgb, LiOverlay.a);
+	};
+	#endif //LIGHT_OVERLAY
 	//result = diffuse;
+//-----------------------------------
 //endif_RCN
 
 
@@ -328,21 +350,15 @@ if (!(oreTest.a == 1.00)){
 	//	diffuse.rgb = texture2D(s_LightMapTexture, v_position.xz/16.0).rgb;		
 	//	diffuse.rgb = texture2D(s_SeasonsTexture, v_position.xz/16.0).rgb;	
 	
-	}
+	};
 	
 	//	diffuse = vec4(1.0,1.0,1.0,1.0);
 	//	diffuse = vec4(0.5,0.5,0.5,1.0);
 	//	diffuse = vec4(0.0);
 	
 	//diffuse = result;
+	
+	//diffuse.rgb = texture2D(s_LightMapTexture, v_lightmapUV.xy/16.0).rgb;	
+	
     gl_FragColor = diffuse;
-} 
-
-
-
-
-
-
-
-
-
+}

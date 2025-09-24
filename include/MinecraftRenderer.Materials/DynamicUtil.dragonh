@@ -1,4 +1,3 @@
-#include "../defines.sh"
 #ifndef DYNAMIC_UTIL_H_HEADER_GUARD
 #define DYNAMIC_UTIL_H_HEADER_GUARD
 vec2 applyUvAnimation(vec2 uv, const vec4 uvAnimation) { // #line 3
@@ -43,9 +42,7 @@ float calculateLightIntensity(const mat4 world, const vec4 normal, const vec4 ti
     const float ZFAC = 0.1;
 
     vec3 N = normalize(mul(world, normal)).xyz;
-    #ifndef NIGHT_VISION
     N.y *= tileLightColor.a;
-    #endif
     float yLight = (1.0 + N.y) * 0.5;
 
     return yLight * (1.0 - AMBIENT) + N.x * N.x * XFAC + N.z * N.z * ZFAC + AMBIENT;
