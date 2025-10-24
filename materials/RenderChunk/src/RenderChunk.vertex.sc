@@ -11,6 +11,9 @@ $output v_color0, v_texcoord0, v_lightmapUV, v_position, v_worldpos, v_fog
 #include <defines.sh>
 #include <RCN_config.h>
 
+//precision mediump float;
+//precision highp int;
+
 uniform vec4 RenderChunkFogAlpha;
 uniform vec4 FogAndDistanceControl;
 uniform vec4 ViewPositionAndTime;
@@ -22,7 +25,28 @@ float Pow2(float x){
     return x * x;
 }
 
-// #define a_texcoord1 vec2(fract(a_texcoord1.x*15.9375)+0.0001,floor(a_texcoord1.x*15.9375)*0.0625+0.0001)
+#define a_texcoord1 vec2(fract(a_texcoord1.x*15.9375),floor(a_texcoord1.x*15.9375)*0.0625)
+
+//#define a_texcoord1 vec2(a_texcoord1.x,1.0)
+/*
+#define a_texcoord1 vec2( \
+floor(fract(a_texcoord1.x*15.9375)*16.0)*0.0625, \
+floor(a_texcoord1.x*15.9375)*0.0625 \
+)
+
+#define a_texcoord1 clamp(vec2( \
+mod(floor(a_texcoord1.x * 255.0), 16.0), \
+floor(floor(a_texcoord1.x * 255.0) / 16.0) \
+) * 0.0625, 0.0, 1.0)
+
+floor(a_texcoord1.x * 255.0) - 16.0 * floor(floor(a_texcoord1.x * 255.0) / 16.0);
+floor(floor(a_texcoord1.x * 255.0) / 16.0);
+
+#define a_texcoord1 clamp(vec2( \
+float(uint(floor(a_texcoord1.x * 255.0)) & 15u), \
+float(uint(floor(a_texcoord1.x * 255.0)) >> 4u) \
+)* 0.0625, 0.0, 1.0)
+*/
 
 void main() {
     mat4 model;

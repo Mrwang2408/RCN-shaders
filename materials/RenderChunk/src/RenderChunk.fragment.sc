@@ -8,6 +8,9 @@ $input v_color0, v_texcoord0, v_lightmapUV, v_position, v_worldpos, v_fog
 #include <RCN_apply.h>
 //#include <RCN_glow.h>
 
+//precision mediump float;
+//precision highp int;
+
 SAMPLER2D(s_LightMapTexture, 0);
 SAMPLER2D(s_MatTexture, 1);
 SAMPLER2D(s_SeasonsTexture, 2);
@@ -23,6 +26,8 @@ void main() {
 	vec4 color = v_color0;
 	vec2 lightUV = v_lightmapUV;
 	vec3 chunkPos = v_position;  //chunkPos：每区块坐标（16x16x16）
+	
+	vec3 worldPos = v_worldpos.xyz;
 	
 	float time = ViewPositionAndTime.w;
 	
@@ -61,6 +66,9 @@ void main() {
 		diffuse.rgb *= color.aaa;
 	#else
 		diffuse *= color;
+		//diffuse.rgb *= color.rgb;
+		//diffuse.a = color.a;
+		//diffuse.rgb *= color.aaa;  //1.21.120.23
 	#endif //SEASONS
 	
 	
@@ -107,8 +115,9 @@ void main() {
 
 
 //RCN_glow
-	#ifdef ORE_TEST
+#ifdef ORE_TEST
 	vec4 oreTest = texture2DLod(s_MatTexture, v_texcoord0, 0.0);
+	//int oreTest = int(texture2DLod(s_MatTexture, v_texcoord0, 0.0).a * 255.0);
 	// vec3 glow = nlGlow(s_MatTexture, v_texcoord0, diffuse, v_extra.a);
 	/*
     if (GLOW_PIXEL(oreTest)) {
@@ -119,24 +128,31 @@ void main() {
 	//diffuse.rgb *= color.rgb;
 	//diffuse.rgb += glow;
 	
-  
-if (!(oreTest.a == 1.00)){
+	/*
+//if (!(oreTest.a == 1.00)){
+//255=1.00, 254=0.996078, 253=0.992156, 252=0.988235, 251=0.984313
+#ifndef TRANSPARENT
+if (oreTest.a < 0.995){
 	if (oreTest.a > 0.03 && oreTest.a < 0.06) {
 		//diffuse.rgb = ((vec3(1.0, 1.0, 1.0)+0.95) * diffuse.rgb);
 		//diffuse.rgb = (vec3(1.0, 0.0, 0.0);
 		//needLightMap = false;
 	};
 	if (oreTest.a > 0.9875 && oreTest.a < 0.9925) {
-		diffuse.rgb = ((vec3(1.0, 1.0, 1.0)+0.45) * diffuse.rgb);
+		//diffuse.rgb = ((vec3(1.0, 1.0, 1.0)+0.45) * diffuse.rgb);
 		//diffuse.rgb = (vec3(0.0, 1.0, 0.0);
-		needLightMap = false;
+		//needLightMap = false;
 	};
 	if (oreTest.a > 0.948 && oreTest.a < 0.966) {
-		diffuse.rgb = ((vec3(0.6, 0.6, 0.6)+0.3) * diffuse.rgb);
+		//diffuse.rgb = ((vec3(0.6, 0.6, 0.6)+0.3) * diffuse.rgb);
 		//diffuse.rgb = (vec3(0.0, 0.0, 1.0);
-		needLightMap = false;
+		//needLightMap = false;
 	};
-	
+	if (oreTest.a > 0.9875 && oreTest.a < 0.995) {
+		if (oreTest.a < 0.995 ) {
+		//color.rgb = max(color.rgb, NL_GLOW_TEX*(0.995-diffuse.a)/(0.995-0.9875));
+		};
+	};
 	#ifdef OPAQUE
 		if (oreTest.a < 0.2) {
 			//needDiscard = true;  //矿物透视Xray3
@@ -144,13 +160,58 @@ if (!(oreTest.a == 1.00)){
 		};
 	#endif //OPAQUE
 };
-
+#endif //TRANSPARENT
+	*/
+	/*
+	vec3 glow = diffuse.rgb * diffuse.rgb * 0.5;
+	if (oreTest == 252) {
+		//diffuse.rgb += glow;
+		//needLightMap = false;
+		color.rgb = max(color.rgb, NL_GLOW_TEX*(0.995-diffuse.a)/(0.995-0.9875));
+	}else if (oreTest == 253) {
+		//diffuse.rgb += glow * 0.4;
+		//needLightMap = false;
+		color.rgb = max(color.rgb, NL_GLOW_TEX*(0.995-diffuse.a)/(0.995-0.9875));
+	};
+	if (oreTest < 252) {
+		//diffuse.rgb = vec3(1.0);
+		//needLightMap = false;
+		color.rgb = max(color.rgb, NL_GLOW_TEX*(0.995-diffuse.a)/(0.995-0.9875));
+		
+	};
+	*/
+	// vec3 glow = nlGlow(s_MatTexture, v_texcoord0, diffuse, 1.0);
 	
-	//vec3 glow = nlGlow(s_MatTexture, v_texcoord0, diffuse, 1.0);
 	
-	#endif //ORE_TEST
+	if (oreTest.a > 0.988 && oreTest.a < 0.993) {
+		vec3 glow = oreTest.rgb * oreTest.rgb;
+		if (oreTest.a > 0.989) {
+			glow *= 0.4;
+		};
+		needLightMap = false;
+		diffuse.rgb *= (2.0 - color.rgb);
+		diffuse.rgb += glow * 0.5;
+		diffuse.rgb *= 0.6 + 0.4 * lightmap.rgb;  //lightmap_factor
+	};
+	/*
+	vec3 glow = glowDetect(oreTest.rgba) * NL_GLOW_TEX;
+	//diffuse.rgb *= diffuse.rgb;
+	//diffuse.rgb *= color.rgb;
+	vec3 lightmap_factor = 0.6 + 0.4 * lightmap.rgb;
+	if (glow.rgb != vec3(0.0)) {
+		needLightMap = false;
+		diffuse.rgb *= (2.0 - color.rgb);
+		diffuse.rgb += glow;
+		diffuse.rgb *= lightmap_factor;
+	};
+	*/
+	//lightmap.rgb = 0.6 + 0.4 * lightmap.rgb;
+	lightmap.rgb = 0.3 + 0.7 * lightmap.rgb;
+	
+#endif //ORE_TEST
 //endif_RCN
-
+	
+	//diffuse *= color;
 
 
 //RCN_overlays
@@ -213,7 +274,7 @@ if (!(oreTest.a == 1.00)){
 	#ifndef NIGHT_VISION
 	if (needLightMap) {
 		//diffuse.rgb *= texture2D(s_LightMapTexture,lightUV).rgb;
-		diffuse.rgb *= texture2D(s_LightMapTexture, v_lightmapUV).rgb;  //设置夜视
+		diffuse.rgb *= lightmap.rgb;  //设置夜视
 	};
 	#endif
 #endif
@@ -225,8 +286,12 @@ if (!(oreTest.a == 1.00)){
 	#ifdef REDSTONE_OVERLAY  //RCN
 	if (isRsDust) {
 		diffuse.rgb=applyRsOverlay(albedo.rgb,isRsOverlay);
-		float ambient_factor = 0.5625 + 0.5 * lightmap.r;
+		vec3 ambient_factor = 0.5625 + 0.5 * lightmap.rgb;
 		diffuse.rgb *= ambient_factor;
+		//diffuse.r = (diffuse.r - 0.1) * 1.111;
+		//diffuse.rgb = vec3(1.0);
+		//diffuse.rgb = fract(chunkPos);
+		
 	};
 	#endif  //REDSTONE_OVERLAY
 //-----------------------------------
@@ -235,7 +300,7 @@ if (!(oreTest.a == 1.00)){
 		//diffuse.rgb=applyChunkBorder(diffuse.rgb,setChunkBorder);
 		//diffuse.rgb = mix(diffuse.rgb + 0.5, vec3(1.0) - diffuse.rgb, smoothstep(0.3, 0.6, max(diffuse.r, max(diffuse.g, diffuse.b))));
 		if (setChunkBorder == 1) {
-		diffuse.rgb = ((diffuse.rgb / 0.4) * (vec3(1.0, 1.0, 1.0) - diffuse.rgb)); 
+		diffuse.rgb = ((diffuse.rgb * 2.5) * (vec3(1.0, 1.0, 1.0) - diffuse.rgb)); 
 		} else {
 		vec4 ChunkColor = checkChunkColor(setChunkBorder);
 		diffuse.rgb = mix(diffuse.rgb, ChunkColor.rgb, ChunkColor.a);
@@ -339,7 +404,7 @@ if (!(oreTest.a == 1.00)){
 		
 	if (fract(v_position.y) < 0.01) {
 	
-	//	diffuse.rgb = texture2D(s_MatTexture, v_position/16.0).rgb;
+	//	diffuse.rgb = texture2D(s_MatTexture, v_position.xz/16.0).rgb;
 	//	diffuse.rgb = texture2D(s_MatTexture, v_position.xz/vec2(512.0,256.0)).rgb;
 	
 	//	float uvt1 = fract(((uv0.y-=((uv0.y>0.0234375)?0.0234375:0.0)) * 25.0));
@@ -354,11 +419,25 @@ if (!(oreTest.a == 1.00)){
 	
 	//	diffuse = vec4(1.0,1.0,1.0,1.0);
 	//	diffuse = vec4(0.5,0.5,0.5,1.0);
-	//	diffuse = vec4(0.0);
+	//	diffuse = vec4(0.0);zSXzdsx
 	
 	//diffuse = result;
 	
 	//diffuse.rgb = texture2D(s_LightMapTexture, v_lightmapUV.xy/16.0).rgb;	
+	
+	float uvx = floor(v_lightmapUV.x * 255.0);
+	float uvy = fract(v_lightmapUV.x * 255.0);
+	//diffuse.rgb = vec3_splat(uvy);
+	
+	//diffuse.rgb = v_color0.rgb;
+	//diffuse.rgb = v_color0.aaa;
+	//diffuse.a = 1.0;
+	
+	vec3 viewDir = normalize(worldPos - ViewPositionAndTime.xyz);
+    vec3 boardPlane = normalize(vec3(viewDir.z, 0.0, -viewDir.x));
+	
+	//diffuse.rgb = fract(worldPos);
+	//diffuse.rgb = boardPlane;
 	
     gl_FragColor = diffuse;
 }

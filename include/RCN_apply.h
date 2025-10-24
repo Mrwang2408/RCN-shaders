@@ -34,7 +34,8 @@ vec4 checkLiOverlay(int set) {
 }
 
 
- #define NL_GLOW_TEX 2.2
+  //#define NL_GLOW_TEX 2.2
+  #define NL_GLOW_TEX 0.5
 /*
   // Texture alpha: diffuse.a
   // 252/255 = max glow
@@ -46,18 +47,37 @@ vec3 glowDetect(vec4 diffuse) {
   return vec3(0.0,0.0,0.0);
 }
 */
-vec3 glowDetect(vec4 diffuse) {
-  if (diffuse.a > 0.988 && diffuse.a < 0.993) {
-    vec3 glow = diffuse.rgb * diffuse.rgb;
-    if (diffuse.a > 0.989) {
-      return 0.4 * glow;
+vec3 glowDetect(vec4 texCol) {
+  if (texCol.a > 0.988 && texCol.a < 0.993) {
+    vec3 glow = texCol.rgb * texCol.rgb;
+    if (texCol.a > 0.989) {
+      glow *= 0.4;
     };
     return glow;
   };
   return vec3(0.0,0.0,0.0);
 }
 
+//+
+//Modify by Mrwang2408
+//QQ:3308116191
+//https://github.com/Mrwang2408/RCN-shaders
+//useless-shaders by @OEOTYAN
 
+/*
+	vec3 glow = glowDetect(oreTest.rgba) * NL_GLOW_TEX;
+	//diffuse.rgb *= diffuse.rgb;
+	//diffuse.rgb *= color.rgb;
+	vec3 lightmap_factor = 0.6 + 0.4 * lightmap.rgb;
+	if (glow.rgb != vec3(0.0)) {
+		needLightMap = false;
+		diffuse.rgb *= (2.0 - color.rgb);
+		diffuse.rgb += glow;
+		diffuse.rgb *= lightmap_factor;
+	};
+	//lightmap.rgb = 0.6 + 0.4 * lightmap.rgb;
+	//lightmap.rgb = 0.3 + 0.7 * lightmap.rgb;
+*/
 
 //-----------------------------------
 
@@ -90,6 +110,105 @@ vec4 applyLiOverlay(vec4 diffuse, int set) {
 
 int runChunkBorder(vec3 cp) {
 	vec3 bp = fract(cp);
+	vec3 cr = 8.0 - abs(cp - 8.0);
+	vec3 br = 0.5 - abs(bp - 0.5);
+	float cn = min(cr.x, cr.z);
+	float bn = max(br.x, br.z);
+	
+	if ( int(cr.x < 0.0625) + int(cr.y < 0.0625) + int(cr.z < 0.0625) >= 2 ) {
+		if (cp.x < 0.0625 && cp.z < 0.0625) {
+			return 3; //y轴绿色显示
+		} else if (cp.z < 0.0625 && cp.x < 15.9375) {
+			return 4; //x轴红色显示
+		} else if (cp.x < 0.0625) {
+			return 5; //z轴深蓝色显示
+		} else {
+			return 2; //其于部分蓝色显示
+		};
+	} else if (( cr.x < 0.09375 || cr.z < 0.09375 ) && (
+		int(br.x < 0.0625) + int(br.y < 0.0625) + int(br.z < 0.0625) >= 2 )) {
+		return 1;  //每方块刻度白线
+	};
+	return 0;
+	
+/*	
+	if (cn < 0.0625) {
+		//return 3;
+	};
+	if (cn < 0.09375 && bn < 0.03125) {
+		//return 1;
+	};
+	return 0;
+*/
+}
+
+/*
+vec3 cp = position.xyz;
+if (
+	((cp.x < 0.0625 || cp.x > 15.9375) && (cp.z < 0.0625 || cp.z > 15.9375)) || 
+	((cp.y < 0.0625 || cp.y > 15.9375) && (cp.x < 0.0625 || cp.x > 15.9375)) || 
+	((cp.y < 0.0625 || cp.y > 15.9375) && (cp.z < 0.0625 || cp.z > 15.9375))) {
+	return 1
+};
+*/
+/*
+int runChunkBorder(vec3 cp) {
+	vec3 bp = fract(cp);
+	vec3 cr = 8.0 - abs(cp - 8.0);
+	vec3 br = 0.5 - abs(bp - 0.5);
+	float cn = min(cr.x, cr.z);
+	float bn = max(br.x, br.z);
+	// (cr.x < 0.0625) + (cr.y < 0.0625) + (cr.z < 0.0625) >= 2 
+	// (br.x < 0.0625) + (br.y < 0.0625) + (br.z < 0.0625) >= 2 
+	if (
+	( cr.x < 0.0625 && cr.z < 0.0625 ) || 
+	( cr.y < 0.0625 && cr.x < 0.0625 ) || 
+	( cr.y < 0.0625 && cr.z < 0.0625 )) {
+		if (cp.x < 0.0625 && cp.z < 0.0625) {
+			return 3; //y轴绿色显示
+		} else if (cp.z < 0.0625 && cp.x < 15.9375) {
+			return 4; //x轴红色显示
+		} else if (cp.x < 0.0625) {
+			return 5; //z轴深蓝色显示
+		} else {
+			return 2; //其于部分蓝色显示
+		};
+	} else if (
+		( cr.x < 0.09375 || cr.z < 0.09375 ) && (
+		( br.x < 0.03125 && br.z < 0.03125 ) || 
+		( br.y < 0.03125 && br.x < 0.03125 ) ||
+		( br.y < 0.03125 && br.z < 0.03125 ) )) {
+		return 1;  //每方块刻度白线
+	};
+	return 0;
+}
+*/
+/*
+	vec3 bp = fract(cp);
+	vec3 cr = 8.0 - abs(cp - 8.0);
+	vec3 br = 0.5 - abs(bp - 0.5);
+	float cn = min(cr.x, cr.z);
+	float bn = max(br.x, br.z);
+	
+	if ( int(cr.x < 0.0625) + int(cr.y < 0.0625) + int(cr.z < 0.0625) >= 2 ) {
+		if (cp.x < 0.0625 && cp.z < 0.0625) {
+			return 3; //y轴绿色显示
+		} else if (cp.z < 0.0625 && cp.x < 15.9375) {
+			return 4; //x轴红色显示
+		} else if (cp.x < 0.0625) {
+			return 5; //z轴深蓝色显示
+		} else {
+			return 2; //其于部分蓝色显示
+		};
+	} else if (( cr.x < 0.09375 || cr.z < 0.09375 ) && (
+		int(br.x < 0.0625) + int(br.y < 0.0625) + int(br.z < 0.0625) >= 2 )) {
+		return 1;  //每方块刻度白线
+	};
+	return 0;
+*/
+/*
+int runChunkBorder(vec3 cp) {
+	vec3 bp = fract(cp);
 	if (
 		((cp.x < 0.0625 || cp.x > 15.9375) && (cp.z < 0.0625 || cp.z > 15.9375)) || 
 		((cp.y < 0.0625 || cp.y > 15.9375) && (cp.x < 0.0625 || cp.x > 15.9375)) || 
@@ -112,7 +231,7 @@ int runChunkBorder(vec3 cp) {
 	};
 	return 0;
 }
-
+*/
 /*
 int runChunkBorder(vec3 cp) {
 	vec3 bp = fract(cp);
@@ -357,6 +476,7 @@ bool runRsOverlay(vec3 color, vec3 cp) {
 int runLiOverlay(vec2 lightUV, vec3 cp) {
 	int set = 0;
 	float light = 0.0;
+	lightUV += 0.001;  //fix z-fighting
 	vec3 bp = fract(cp);
 	bp.x = bp.x * 3.0 - 1.1;
 	bp.z = bp.z * 3.0 - 1.1;
@@ -372,6 +492,7 @@ int runLiOverlay(vec2 lightUV, vec3 cp) {
 			light =lightUV.y;  //右下方选择天空光照
 		};
 	};
+	#ifdef ALPHA_TEST
 	if (set != 0) {
 		if (light <0.0625) {
 			if (
@@ -523,6 +644,7 @@ int runLiOverlay(vec2 lightUV, vec3 cp) {
 			};
 		};
 	};
+	#endif
 	if (lightUV.x > 0.0615 && lightUV.x < 0.0625) {
 		set = 4;  //边缘线指示
 	} else if (lightUV.y > 0.0615 && lightUV.y < 0.0625) {
