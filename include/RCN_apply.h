@@ -126,7 +126,7 @@ int runChunkBorder(vec3 cp) {
 			return 2; //其于部分蓝色显示
 		};
 	} else if (( cr.x < 0.09375 || cr.z < 0.09375 ) && (
-		int(br.x < 0.0625) + int(br.y < 0.0625) + int(br.z < 0.0625) >= 2 )) {
+		int(br.x < 0.03125) + int(br.y < 0.03125) + int(br.z < 0.03125) >= 2 )) {
 		return 1;  //每方块刻度白线
 	};
 	return 0;
@@ -201,7 +201,7 @@ int runChunkBorder(vec3 cp) {
 			return 2; //其于部分蓝色显示
 		};
 	} else if (( cr.x < 0.09375 || cr.z < 0.09375 ) && (
-		int(br.x < 0.0625) + int(br.y < 0.0625) + int(br.z < 0.0625) >= 2 )) {
+		int(br.x < 0.03125) + int(br.y < 0.03125) + int(br.z < 0.03125) >= 2 )) {
 		return 1;  //每方块刻度白线
 	};
 	return 0;
@@ -492,7 +492,7 @@ int runLiOverlay(vec2 lightUV, vec3 cp) {
 			light =lightUV.y;  //右下方选择天空光照
 		};
 	};
-	#ifdef ALPHA_TEST
+	//#ifdef ALPHA_TEST
 	if (set != 0) {
 		if (light <0.0625) {
 			if (
@@ -644,7 +644,7 @@ int runLiOverlay(vec2 lightUV, vec3 cp) {
 			};
 		};
 	};
-	#endif
+	//#endif
 	if (lightUV.x > 0.0615 && lightUV.x < 0.0625) {
 		set = 4;  //边缘线指示
 	} else if (lightUV.y > 0.0615 && lightUV.y < 0.0625) {

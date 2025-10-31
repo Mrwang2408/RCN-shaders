@@ -34,7 +34,7 @@
 				#define CHUNK_BORDERS //区块显示
 				#define LIGHT_OVERLAY //亮度显示
 			#endif
-		#else //SEASONS
+		#else //ifndef(SEASONS)
 			#if defined(ALPHA_TEST) //AlphaTest
 				#define REDSTONE_OVERLAY //红石显示
 				#define ORE_TEST //植物发光
@@ -44,7 +44,7 @@
 			#if defined(OPAQUE) //Opaque
 				#define ORE_TEST //矿物发光
 				#define CHUNK_BORDERS //区块显示
-				//#define LIGHT_OVERLAY //亮度显示
+				#define LIGHT_OVERLAY //亮度显示
 			#endif
 			#if defined(TRANSPARENT) //Transparrent
 				#define CHUNK_BORDERS //区块显示

@@ -104,16 +104,24 @@ void main() {
 	
 	
 #endif //DEPTH_ONLY
-
-
+	
+	
 #ifndef TRANSPARENT
 	diffuse.a = color.a;
 	//diffuse.a =  1.0;
 #endif //TRANSPARENT
-
-
-
-
+	
+	
+	// (14/255) - (35/255)
+	// factor = (x*255.0-14)/(35-14)
+	vec3 baselight = texture2D(s_LightMapTexture, vec2(0.0, 0.0)).rgb;
+	if (baselight.r < 0.141176) {
+		float setlight = baselight.r * 12.142857 - 0.666666;
+		//lightmap.rgb = lightmap.rgb * (1.0 - setlight) + setlight;
+		lightmap.rgb = mix(lightmap.rgb, vec3(1.0,1.0,1.0), setlight);
+ 	};
+	
+	
 //RCN_glow
 #ifdef ORE_TEST
 	vec4 oreTest = texture2DLod(s_MatTexture, v_texcoord0, 0.0);
@@ -161,6 +169,7 @@ if (oreTest.a < 0.995){
 	#endif //OPAQUE
 };
 #endif //TRANSPARENT
+};
 	*/
 	/*
 	vec3 glow = diffuse.rgb * diffuse.rgb * 0.5;
@@ -168,7 +177,7 @@ if (oreTest.a < 0.995){
 		//diffuse.rgb += glow;
 		//needLightMap = false;
 		color.rgb = max(color.rgb, NL_GLOW_TEX*(0.995-diffuse.a)/(0.995-0.9875));
-	}else if (oreTest == 253) {
+	} else if (oreTest == 253) {
 		//diffuse.rgb += glow * 0.4;
 		//needLightMap = false;
 		color.rgb = max(color.rgb, NL_GLOW_TEX*(0.995-diffuse.a)/(0.995-0.9875));
@@ -182,16 +191,19 @@ if (oreTest.a < 0.995){
 	*/
 	// vec3 glow = nlGlow(s_MatTexture, v_texcoord0, diffuse, 1.0);
 	
+	//lightmap.rgb = 0.6 + 0.4 * lightmap.rgb;
+	//lightmap.rgb = 0.3 + 0.7 * lightmap.rgb;
+	//lightmap.rgb = 0.4375 + 0.5625 * lightmap.rgb;
 	
 	if (oreTest.a > 0.988 && oreTest.a < 0.993) {
 		vec3 glow = oreTest.rgb * oreTest.rgb;
 		if (oreTest.a > 0.989) {
-			glow *= 0.4;
+			glow *= 0.375;
 		};
 		needLightMap = false;
 		diffuse.rgb *= (2.0 - color.rgb);
 		diffuse.rgb += glow * 0.5;
-		diffuse.rgb *= 0.6 + 0.4 * lightmap.rgb;  //lightmap_factor
+		diffuse.rgb *= 0.375 + 0.625 * lightmap.rgb;  //lightmap_factor
 	};
 	/*
 	vec3 glow = glowDetect(oreTest.rgba) * NL_GLOW_TEX;
@@ -205,8 +217,6 @@ if (oreTest.a < 0.995){
 		diffuse.rgb *= lightmap_factor;
 	};
 	*/
-	//lightmap.rgb = 0.6 + 0.4 * lightmap.rgb;
-	lightmap.rgb = 0.3 + 0.7 * lightmap.rgb;
 	
 #endif //ORE_TEST
 //endif_RCN
@@ -286,7 +296,7 @@ if (oreTest.a < 0.995){
 	#ifdef REDSTONE_OVERLAY  //RCN
 	if (isRsDust) {
 		diffuse.rgb=applyRsOverlay(albedo.rgb,isRsOverlay);
-		vec3 ambient_factor = 0.5625 + 0.5 * lightmap.rgb;
+		vec3 ambient_factor = 0.6875 + 0.375 * lightmap.rgb;
 		diffuse.rgb *= ambient_factor;
 		//diffuse.r = (diffuse.r - 0.1) * 1.111;
 		//diffuse.rgb = vec3(1.0);
@@ -432,6 +442,57 @@ if (oreTest.a < 0.995){
 	//diffuse.rgb = v_color0.rgb;
 	//diffuse.rgb = v_color0.aaa;
 	//diffuse.a = 1.0;
+	
+	//float gray = dot(diffuse.rgb, vec3(0.299, 0.587, 0.114));
+	//diffuse.rgb = vec3_splat(gray);
+	
+	if ( dFdx(lightUV)+dFdy(lightUV) != lightUV*2.0 ) {
+		//diffuse.rgb = vec3(1.0);
+	}; 
+	
+	/*
+	vec2 texCoords = v_texcoord0;
+	vec2 dx = dFdx(texCoords);
+	vec2 dy = dFdy(texCoords);
+	float deltaMaxSqr = max(dot(dx, dx), dot(dy, dy));
+	float mipLevel = 0.5 * log2(deltaMaxSqr);
+	diffuse.rgb = vec3(mipLevel);
+	*/
+	/*
+	float textureSize = 4096.0; // 假设纹理是1024x1024
+    
+    // 计算纹理坐标在屏幕空间中的梯度
+    vec2 dx = dFdx(v_texcoord0);
+    vec2 dy = dFdy(v_texcoord0);
+    
+    // 计算在纹理空间中的最大变化率
+    float maxDelta = max(length(dx * textureSize), length(dy * textureSize));
+    
+    // 计算mipmap级别：log2(纹理空间变化率)
+    float mipLevel = log2(maxDelta);
+	
+	//diffuse = texture2D(s_MatTexture, v_texcoord0, mipmapLevel);
+	
+	diffuse.rgb = vec3(mipLevel, mipLevel*4096.0, mipLevel * 10.0);
+	*/
+	
+    vec2 colorChangeX = dFdx(lightUV);
+    vec2 colorChangeY = dFdy(lightUV);
+    
+    // 计算每个通道的总变化
+    vec2 totalChange = abs(colorChangeX) + abs(colorChangeY);
+    
+    // 判断是否所有通道的变化都很小
+    float maxChange = max(totalChange.x, totalChange.y);
+    float threshold = 0.000001;
+    
+    if (maxChange < threshold) {
+        // 纯色区域
+        //diffuse = vec4(1.0, 0.0, 0.0, 1.0);
+    } else {
+        // 渐变色或有颜色变化的区域
+        //diffuse = vec4(0.0, 1.0, 0.0, 1.0);
+    }
 	
 	vec3 viewDir = normalize(worldPos - ViewPositionAndTime.xyz);
     vec3 boardPlane = normalize(vec3(viewDir.z, 0.0, -viewDir.x));
